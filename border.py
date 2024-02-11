@@ -1,6 +1,6 @@
 """
 Add a border to the image named in the first parameter.
-A new image with border_{filename} will be generated.
+A new image with {filename}_bordered will be generated.
 """
 import os
 import math
