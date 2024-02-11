@@ -4,7 +4,7 @@ A small script to add a border to a jpeg or png photo.
 
 Exif data can also be extracted and added to the border if the mood strikes.
 
-## Useage
+## Usage
 
 ```bash
 usage: python border.py [-h] [-e] [-c COLOUR] filename
