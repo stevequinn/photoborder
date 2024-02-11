@@ -10,7 +10,7 @@ from PIL import Image, ImageOps, ImageDraw, ImageFont
 from PIL.ExifTags import TAGS
 
 parser = argparse.ArgumentParser(
-    prog='PhotoBorder',
+    prog='python border.py',
     description='Add a border and exif data to a jpg or png photo',
     epilog='Made for fun and to solve a little problem.'
 )
