@@ -132,7 +132,23 @@ def save(path, colour, add_exif):
             font_y = img_with_border.height - border_size + (font_size / 2)
             img_with_border = write_text_on_image(img_with_border, exif_print, font_x, font_y, font_size)
 
-    img_with_border.save(f'{filename}_bordered.{ext}')
+
+    # There are two parts to JPEG quality. The first is the quality setting.
+    #
+    # JPEG also uses chroma subsampling, assuming that color hue changes are
+    # less important than lightness changes and some information can be safely
+    # thrown away. Unfortunately in demanding applications this isn't always true,
+    # and you can most easily notice this on red edges. PIL didn't originally expose
+    # a documented setting to control this aspect.
+    #
+    # Pascal Beyeler discovered the option which disables chroma subsampling. You can set
+    # subsampling=0 when saving an image and the image looks way sharper!
+    #
+    # Note also that the documentation claims quality=95 is the best quality setting and
+    # that anything over 95 should be avoided. This may be a change from earlier versions of PIL.
+    #
+    # ref: https://stackoverflow.com/a/19303889
+    img_with_border.save(f'{filename}_bordered.{ext}', subsampling=0, quality=95)
 
 
 if os.path.isdir(args.filename):
