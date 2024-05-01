@@ -41,8 +41,8 @@ def get_border_size(img_width, img_height):
     golden_ratio = (1 + 5 ** 0.5) / 2
     img_area = img_width * img_height
     canvas_area = img_area * golden_ratio
-    # I find just dividing by 4 too large for me. Tripling it looks better IMO.
-    border_size = math.ceil(math.sqrt(canvas_area - img_area) / 12)
+    # I find just dividing by 4 too large for me. Divide by 16 looks better imo.
+    border_size = math.ceil(math.sqrt(canvas_area - img_area) / 32)
 
     return border_size
 
@@ -116,10 +116,10 @@ def save(path, colour, add_exif):
     img = Image.open(path)
     border_size = get_border_size(img.width, img.height)
     img_with_border = ImageOps.expand(img, border=border_size, fill=colour)
+    exif = None
 
     if add_exif:
         exif = get_exif(img)
-        # print(exif)
         if exif:
             # exif_keys = ['Make', 'Model', 'LensMake', 'LensModel', 'FNumber', 'FocalLength', 'ISOSpeedRatings']
             exif_print = []
@@ -148,7 +148,9 @@ def save(path, colour, add_exif):
     # that anything over 95 should be avoided. This may be a change from earlier versions of PIL.
     #
     # ref: https://stackoverflow.com/a/19303889
-    img_with_border.save(f'{filename}_bordered.{ext}', subsampling=0, quality=95)
+    save_as = filename.replace('_border', '').replace('_exif', '')
+    save_as =  f'{save_as}_border' + ('_exif' if exif else '')
+    img_with_border.save(f'{save_as}.{ext}', subsampling=0, quality=95)
 
 
 if os.path.isdir(args.filename):
