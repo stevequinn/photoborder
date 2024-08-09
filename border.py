@@ -42,7 +42,8 @@ def get_border_size(img_width, img_height):
     img_area = img_width * img_height
     canvas_area = img_area * golden_ratio
     # I find just dividing by 4 too large for me. Divide by 16 looks better imo.
-    border_size = math.ceil(math.sqrt(canvas_area - img_area) / 32)
+    border_size = math.ceil(math.sqrt(canvas_area - img_area) / 96)
+    # border_size = math.ceil(math.sqrt(canvas_area - img_area) / 48)
 
     return border_size
 
