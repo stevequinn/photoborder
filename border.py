@@ -2,7 +2,6 @@
 Add a border to the image named in the first parameter.
 A new image with {filename}_bordered will be generated.
 TODO: Add thin border option with diff exif layout
-TODO: Fix path split when there are multiple . in the file name.
 TODO: Fix Shutter Speed fraction for weird shutter speeds such as from phones.
 TODO: Add directory recursion option with the idea to process 100's or 1000's of images.
 TODO: Add file path pattern filtering blacklist/whitelist options.
