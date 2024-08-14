@@ -10,7 +10,6 @@ import os
 import math
 import argparse
 from dataclasses import dataclass
-from fractions import Fraction
 from PIL import Image
 from exif import get_exif
 from palette import load_image_color_palette, overlay_palette
@@ -29,13 +28,7 @@ parser.add_argument('-p', '--palette', action='store_true',
 args = parser.parse_args()
 
 
-def decimal_to_fraction(decimal):
-    """Convert a decimal value to a fraction display.
-    Used to display shutter speed values.
-    """
-    result = str(Fraction(decimal))
 
-    return result
 
 
 def get_border_size(img_width, img_height, reduceby=4):
@@ -83,8 +76,8 @@ def draw_polaroid_exif(img: Image, exif: dict, border: Border) -> Image:
     margin = heading_font_size / 2
     total_font_height = heading_font_size + (2 * margin) + (2 * font_size)
 
-    # exif_keys = ['Make', 'Model', 'LensMake', 'LensModel', 'FNumber', 'FocalLength', 'ISOSpeedRatings']
-    text = f"Shot on {exif.get('Make', '').strip()} {exif.get('Model', '').strip()}".strip()
+    # text = f"Shot on {exif.get('Make', '').strip()} {exif.get('Model', '').strip()}".strip()
+    text = f"{exif['Make']} {exif['Model']}"
     # Vertical align text in bottom border based on total font block height.
     y = img.height - border.bottom + \
         (border.bottom / 2) - (total_font_height / 2)
@@ -94,7 +87,7 @@ def draw_polaroid_exif(img: Image, exif: dict, border: Border) -> Image:
     y += heading_font_size + margin
 
     font = create_font(font_size)
-    text = f"{exif.get('LensModel', '').strip()}".strip()
+    text = f"{exif['LensModel']}"
     # f"{exif.get('LensMake', '').strip()} {exif.get('LensModel', '').strip()}".strip())
     text_img = write_centred_text_on_image(text_img,
                                            text=text,
@@ -102,7 +95,7 @@ def draw_polaroid_exif(img: Image, exif: dict, border: Border) -> Image:
                                            font=font,
                                            fill=(128, 128, 128))
     y += font_size + margin
-    text = f"{exif.get('FocalLength', '')}mm f/{exif.get('FNumber', '')} ISO{exif.get('ISOSpeedRatings', '')} {decimal_to_fraction(exif.get('ExposureTime', '0'))} sec".strip()
+    text = f"{exif['FocalLength']} {exif['FNumber']} {exif['ISOSpeedRatings']} {exif['ExposureTime']}"
     text_img = write_centred_text_on_image(text_img,
                                            text=text,
                                            y=y,
@@ -167,6 +160,10 @@ def save(path, add_exif, add_palette):
     save_as = f'{save_as}_border' + ('_exif' if exif else '')
     save_path = f'{save_as}.{ext}'
     img_with_border.save(save_path, subsampling=0, quality=95)
+
+    # Clean up
+    img_with_border.close()
+    img.close()
 
     return save_path
 

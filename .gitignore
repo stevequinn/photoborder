@@ -2,3 +2,5 @@
 images/
 *.workflow
 *.pyc
+.venv
+node_modules
