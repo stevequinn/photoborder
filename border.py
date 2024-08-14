@@ -4,6 +4,8 @@ A new image with {filename}_bordered will be generated.
 TODO: Add thin border option with diff exif layout
 TODO: Fix path split when there are multiple . in the file name.
 TODO: Fix Shutter Speed fraction for weird shutter speeds such as from phones.
+TODO: Add directory recursion option with the idea to process 100's or 1000's of images.
+TODO: Add file path pattern filtering blacklist/whitelist options.
 """
 import os
 import math
@@ -119,7 +121,9 @@ def save(path, add_exif, add_palette):
         path (str): The image file path
     """
     filetypes = ['jpg', 'jpeg', 'png']
-    [filename, ext] = path.split('.')
+    path_dot_parts = path.split('.')
+    ext = path_dot_parts[-1:][0]
+    filename = ".".join(path_dot_parts[:-1])
 
     if not ext or ext.lower() not in filetypes:
         print(f'ERROR: image must be one of {filetypes}')
@@ -162,7 +166,10 @@ def save(path, add_exif, add_palette):
     # ref: https://stackoverflow.com/a/19303889
     save_as = filename.replace('_border', '').replace('_exif', '')
     save_as = f'{save_as}_border' + ('_exif' if exif else '')
-    img_with_border.save(f'{save_as}.{ext}', subsampling=0, quality=95)
+    save_path = f'{save_as}.{ext}'
+    img_with_border.save(save_path, subsampling=0, quality=95)
+
+    return save_path
 
 
 if os.path.isdir(args.filename):
@@ -170,8 +177,9 @@ if os.path.isdir(args.filename):
         print(f'Adding border to {file}')
         save(os.path.join(args.filename, file), args.exif, args.palette)
 else:
-    print(f'Adding border to {args.filename}')
-    save(args.filename, args.exif, args.palette)
+    # print(f'Adding border to {args.filename}')
+    save_path = save(args.filename, args.exif, args.palette)
+    print(save_path)
 
 # from PIL import Image, ImageOps
 # for i in list-of-images:
