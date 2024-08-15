@@ -1,7 +1,7 @@
 """
 Add a border to the image named in the first parameter.
 A new image with {filename}_bordered will be generated.
-TODO: Add thin border option with diff exif layout
+TODO: Improve font sizing for small and medium border sizing. It's too small at the moment.
 TODO: Fix Shutter Speed fraction for weird shutter speeds such as from phones.
 TODO: Add directory recursion option with the idea to process 100's or 1000's of images.
 TODO: Add file path pattern filtering blacklist/whitelist options.
@@ -9,11 +9,29 @@ TODO: Add file path pattern filtering blacklist/whitelist options.
 import os
 import math
 import argparse
+from enum import Enum
 from dataclasses import dataclass
 from PIL import Image
 from exif import get_exif
 from palette import load_image_color_palette, overlay_palette
-from text import create_font, create_bold_font, write_centred_text_on_image
+from text import create_font, create_bold_font, draw_text_on_image
+
+class BorderType(Enum):
+    POLAROID = 'p'
+    SMALL = 's'
+    MEDIUM = 'm'
+    LARGE = 'l'
+
+    def __str__(self):
+        return self.value
+
+@dataclass
+class Border:
+    top: int
+    right: int
+    bottom: int
+    left: int
+    border_type: BorderType
 
 parser = argparse.ArgumentParser(
     prog='python border.py',
@@ -25,13 +43,11 @@ parser.add_argument('-e', '--exif', action='store_true',
                     help='print photo exif data on the border')
 parser.add_argument('-p', '--palette', action='store_true',
                     help='Add colour palette to the photo border')
+parser.add_argument('-t', '--border_type', type=BorderType, choices=list(BorderType),
+                    default=BorderType.SMALL, help='Border Type: p for polaroid, s for small, m for medium, l for large')
 args = parser.parse_args()
 
-
-
-
-
-def get_border_size(img_width, img_height, reduceby=4):
+def get_border_size(img_width: int, img_height: int, reduceby: int=4) -> int:
     """Calculate an image border size based on the golden ratio.
 
     Args:
@@ -50,67 +66,74 @@ def get_border_size(img_width, img_height, reduceby=4):
 
     return border_size
 
+def create_border(imgw: int, imgh: int, border_type: Border) -> Border:
+    border = None
+    reduceby = None
+    reduceby_bottom = None
 
-@dataclass
-class Border:
-    top: int
-    right: int
-    bottom: int
-    left: int
+    if border_type == BorderType.POLAROID:
+        reduceby = 32
+        reduceby_bottom = 6
+    elif border_type == BorderType.SMALL:
+        reduceby = 32
+        reduceby_bottom = reduceby
+    elif border_type == BorderType.MEDIUM:
+        reduceby = 16
+        reduceby_bottom = reduceby
+    elif border_type == BorderType.LARGE:
+        reduceby = 6
+        reduceby_bottom = reduceby
 
-def create_polaroid_border(img: Image) -> tuple[Image.Image, Border]:
-    border_size = get_border_size(img.width, img.height, 32)
-    border_bottom_size = get_border_size(img.width, img.height, 6)
-    border = Border(border_size, border_size, border_bottom_size, border_size)
+    border_size = get_border_size(imgw, imgh, reduceby)
+    border_size_bottom = get_border_size(imgw, imgh, reduceby_bottom)
+    border = Border(border_size, border_size, border_size_bottom, border_size, border_type)
+
+    return border
+
+def draw_border(img: Image, border: Border) -> Image:
     w = img.width + border.left + border.right
     h = img.height + border.top + border.bottom
     canvas = Image.new("RGB", (w, h), (255, 255, 255, 0))
     canvas.paste(img, (border.left, border.top))
 
-    return canvas, border
+    return canvas
 
+def draw_exif(img: Image, exif: dict, border: Border) -> Image:
+    centered = border.border_type in (BorderType.POLAROID, BorderType.LARGE)
+    font = create_font(round(border.bottom / 8))
+    heading_font = create_bold_font(round(border.bottom / 6))
+    margin = heading_font.size / 2
+    # 3 Lines of text. 1 heading, two normal.
+    total_font_height = heading_font.size + (2 * margin) + (2 * font.size)
 
-def draw_polaroid_exif(img: Image, exif: dict, border: Border) -> Image:
-    heading_font_size = round(border.bottom / 6)
-    font_size = round(border.bottom / 8)
-    margin = heading_font_size / 2
-    total_font_height = heading_font_size + (2 * margin) + (2 * font_size)
-
-    # text = f"Shot on {exif.get('Make', '').strip()} {exif.get('Model', '').strip()}".strip()
-    text = f"{exif['Make']} {exif['Model']}"
     # Vertical align text in bottom border based on total font block height.
     y = img.height - border.bottom + \
         (border.bottom / 2) - (total_font_height / 2)
-    bold_font = create_bold_font(heading_font_size)
-    text_img = write_centred_text_on_image(
-        img, text, y, bold_font, fill=(100, 100, 100))
-    y += heading_font_size + margin
 
-    font = create_font(font_size)
+    x = border.left
+
+    text = f"{exif['Make']} {exif['Model']}"
+    text_img, y = draw_text_on_image(img, text, (x,y), centered, heading_font, fill=(100, 100, 100))
+
     text = f"{exif['LensModel']}"
-    # f"{exif.get('LensMake', '').strip()} {exif.get('LensModel', '').strip()}".strip())
-    text_img = write_centred_text_on_image(text_img,
-                                           text=text,
-                                           y=y,
-                                           font=font,
-                                           fill=(128, 128, 128))
-    y += font_size + margin
+    text_img, y = draw_text_on_image(text_img, text, (x,y), centered, font, fill=(128, 128, 128))
+
     text = f"{exif['FocalLength']} {exif['FNumber']} {exif['ISOSpeedRatings']} {exif['ExposureTime']}"
-    text_img = write_centred_text_on_image(text_img,
-                                           text=text,
-                                           y=y,
-                                           font=font,
-                                           fill=(128, 128, 128))
+    text_img, y = draw_text_on_image(text_img, text, (x,y), centered, font, fill=(128, 128, 128))
 
     return text_img
 
-
-def save(path, add_exif, add_palette):
+def save(path: str, add_exif: bool, add_palette: bool, border_type: BorderType) -> str:
     """ Add a border to an image
     Supported image types ['jpg', 'jpeg', 'png'].
 
     Args:
         path (str): The image file path
+        add_exif (bool): Add photo exif information to the border
+        add_palette (bool): Add colour palette information to the border.
+                            Currently only supported on Polaroid border types.
+        border_type (BorderType): The type of border to add to the photo.
+
     """
     filetypes = ['jpg', 'jpeg', 'png']
     path_dot_parts = path.split('.')
@@ -123,13 +146,15 @@ def save(path, add_exif, add_palette):
 
     exif = None
     img = Image.open(path)
-    # img_with_border = ImageOps.expand(img, border=border_size, fill=colour)
-    img_with_border, border = create_polaroid_border(img)
+    border = create_border(img.width, img.height, border_type)
+    img_with_border = draw_border(img, border)
+    save_as = f'{filename}_border-{border.border_type}'
 
     if add_exif:
         exif = get_exif(img)
         if exif:
-            img_with_border = draw_polaroid_exif(img_with_border, exif, border)
+            img_with_border = draw_exif(img_with_border, exif, border)
+            save_as = f'{save_as}_exif'
 
     if add_palette:
         palette_size = round(border.bottom / 3)
@@ -140,6 +165,7 @@ def save(path, add_exif, add_palette):
         img_with_border = overlay_palette(img=img_with_border,
                                           color_palette=color_palette,
                                           offset=(palette_x, palette_y))
+        save_as = f'{save_as}_palette'
 
     # There are two parts to JPEG quality. The first is the quality setting.
     #
@@ -156,8 +182,6 @@ def save(path, add_exif, add_palette):
     # that anything over 95 should be avoided. This may be a change from earlier versions of PIL.
     #
     # ref: https://stackoverflow.com/a/19303889
-    save_as = filename.replace('_border', '').replace('_exif', '')
-    save_as = f'{save_as}_border' + ('_exif' if exif else '')
     save_path = f'{save_as}.{ext}'
     img_with_border.save(save_path, subsampling=0, quality=95)
 
@@ -171,10 +195,10 @@ def save(path, add_exif, add_palette):
 if os.path.isdir(args.filename):
     for file in os.listdir(args.filename):
         print(f'Adding border to {file}')
-        save(os.path.join(args.filename, file), args.exif, args.palette)
+        save(os.path.join(args.filename, file), args.exif, args.palette, BorderType(args.border_type))
 else:
     # print(f'Adding border to {args.filename}')
-    save_path = save(args.filename, args.exif, args.palette)
+    save_path = save(args.filename, args.exif, args.palette, BorderType(args.border_type))
     print(save_path)
 
 # from PIL import Image, ImageOps

@@ -35,8 +35,12 @@ class ExifItem:
         if self.data is None or self.data == '':
             return ''
         fmt_data = str(self.data).strip()
+
+        # Deal with any special case data formatting
         if self.tag == 'ExposureTime':
            fmt_data = decimal_to_fraction(fmt_data)
+
+        # Apply the string template formatting defined in self.formatter
         if self.tag in self.formatter:
             return self.formatter[self.tag].format(dataval=fmt_data)
 
