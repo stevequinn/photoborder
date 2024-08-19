@@ -3,10 +3,16 @@ Text on image functions
 """
 from PIL import Image, ImageDraw, ImageFont
 
-MAINFONT = "Avenir.ttc"
+FONTDIR = "fonts/"
+# FONTNAME = f"{FONTDIR}Avenir.ttc"
+# BOLDFONTNAME = f"{FONTDIR}Roboto-Bold.ttf"
+# FONTINDEX = 8
+FONTNAME = f"{FONTDIR}Roboto-Regular.ttf"
+BOLDFONTNAME = f"{FONTDIR}Roboto-Medium.ttf"
+FONTINDEX = 0
 
 
-def create_font(size: int, fontname=MAINFONT) -> ImageFont.FreeTypeFont:
+def create_font(size: int, fontname=FONTNAME) -> ImageFont.FreeTypeFont:
     """Create the font object
 
     Args:
@@ -19,7 +25,7 @@ def create_font(size: int, fontname=MAINFONT) -> ImageFont.FreeTypeFont:
     return font
 
 
-def create_bold_font(size: int, fontname=MAINFONT) -> ImageFont.FreeTypeFont:
+def create_bold_font(size: int, fontname=BOLDFONTNAME) -> ImageFont.FreeTypeFont:
     """Create the bold font object
 
     Args:
@@ -28,7 +34,7 @@ def create_bold_font(size: int, fontname=MAINFONT) -> ImageFont.FreeTypeFont:
     Returns:
         ImageFont.FreeTypeFont: The created font
     """
-    font = ImageFont.truetype(fontname, size, index=8)
+    font = ImageFont.truetype(fontname, size, index=FONTINDEX)
     return font
 
 
@@ -50,6 +56,9 @@ def draw_text_on_image(img: Image, text: str, xy: tuple, centered: bool,
     # Create a draw object.
     # TODO: Creating this every time we want to draw a line is inefficient. Look into other options.
     draw = ImageDraw.Draw(img)
+
+    # Enable antialiasing
+    draw.fontmode = 'L'
 
     x, y = xy
 

@@ -6,17 +6,20 @@ from fractions import Fraction
 from PIL import Image
 from PIL.ExifTags import TAGS
 
-def decimal_to_fraction(decimal):
+def format_shutter_speed(shutter_speed: str) -> str:
     """
     Convert a decimal value to a fraction display.
     Used to display shutter speed values.
     """
-    if not decimal:
-        return ''
-
-    result = str(Fraction(decimal))
-
-    return result
+    try:
+        fraction = Fraction(shutter_speed).limit_denominator()
+        if fraction >= 1:
+            # return f"{fraction.numerator}/{fraction.denominator}"
+            return f"{fraction.numerator}"
+        else:
+            return f"1/{int(1/float(shutter_speed))}"
+    except (ValueError, ZeroDivisionError):
+        return shutter_speed
 
 @dataclass
 class ExifItem:
@@ -38,7 +41,7 @@ class ExifItem:
 
         # Deal with any special case data formatting
         if self.tag == 'ExposureTime':
-           fmt_data = decimal_to_fraction(fmt_data)
+           fmt_data = format_shutter_speed(fmt_data)
 
         # Apply the string template formatting defined in self.formatter
         if self.tag in self.formatter:
@@ -64,7 +67,8 @@ def get_exif(img: Image) -> dict:
         'LensModel': '',
         'FNumber': '',
         'FocalLength': '',
-        'ISOSpeedRatings': ''
+        'ISOSpeedRatings': '',
+        'ExposureTime': ''
     }
 
     if exif_data:

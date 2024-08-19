@@ -1,16 +1,15 @@
 """
 Add a border to the image named in the first parameter.
 A new image with {filename}_bordered will be generated.
-TODO: Improve font sizing for small and medium border sizing. It's too small at the moment.
-TODO: Fix Shutter Speed fraction for weird shutter speeds such as from phones.
-TODO: Add directory recursion option with the idea to process 100's or 1000's of images.
-TODO: Add file path pattern filtering blacklist/whitelist options.
+TODO: Read up on sorting images by appearance https://github.com/Visual-Computing/LAS_FLAS/blob/main/README.md
+TODO: Change exif layout on small and medium border to be on a single line instead of three lines.
 """
 import os
 import math
 import argparse
 from enum import Enum
 from dataclasses import dataclass
+from fnmatch import fnmatch
 from PIL import Image
 from exif import get_exif
 from palette import load_image_color_palette, overlay_palette
@@ -33,19 +32,26 @@ class Border:
     left: int
     border_type: BorderType
 
-parser = argparse.ArgumentParser(
-    prog='python border.py',
-    description='Add a border and exif data to a jpg or png photo',
-    epilog='Made for fun and to solve a little problem.'
-)
-parser.add_argument('filename')
-parser.add_argument('-e', '--exif', action='store_true',
-                    help='print photo exif data on the border')
-parser.add_argument('-p', '--palette', action='store_true',
-                    help='Add colour palette to the photo border')
-parser.add_argument('-t', '--border_type', type=BorderType, choices=list(BorderType),
-                    default=BorderType.SMALL, help='Border Type: p for polaroid, s for small, m for medium, l for large')
-args = parser.parse_args()
+def parse_arguments():
+    parser = argparse.ArgumentParser(
+        prog='python border.py',
+        description='Add a border and exif data to jpg or png photos',
+        epilog='Made for fun and to solve a little problem.'
+    )
+    parser.add_argument('path', help='File or directory path')
+    parser.add_argument('-e', '--exif', action='store_true', default=False,
+                        help='Print photo exif data on the border')
+    parser.add_argument('-p', '--palette', action='store_true', default=False,
+                        help='Add colour palette to the photo border')
+    parser.add_argument('-t', '--border_type', type=BorderType, choices=list(BorderType),
+                        default=BorderType.SMALL, help='Border Type: p for polaroid, s for small, m for medium, l for large')
+    parser.add_argument('-r', '--recursive', action='store_true', default=False,
+                        help='Process directories recursively')
+    parser.add_argument('--include', nargs='+', default=['*.jpg', '*.jpeg', '*.png', '*.JPG', '*.JPEG', '*.PNG'],
+                        help='File patterns to include (default: *.jpg *.jpeg *.png)')
+    parser.add_argument('--exclude', nargs='+', default=["*_border*"],
+                        help='File patterns to exclude')
+    return parser.parse_args()
 
 def get_border_size(img_width: int, img_height: int, reduceby: int=4) -> int:
     """Calculate an image border size based on the golden ratio.
@@ -67,22 +73,13 @@ def get_border_size(img_width: int, img_height: int, reduceby: int=4) -> int:
     return border_size
 
 def create_border(imgw: int, imgh: int, border_type: Border) -> Border:
-    border = None
-    reduceby = None
-    reduceby_bottom = None
-
-    if border_type == BorderType.POLAROID:
-        reduceby = 32
-        reduceby_bottom = 6
-    elif border_type == BorderType.SMALL:
-        reduceby = 32
-        reduceby_bottom = reduceby
-    elif border_type == BorderType.MEDIUM:
-        reduceby = 16
-        reduceby_bottom = reduceby
-    elif border_type == BorderType.LARGE:
-        reduceby = 6
-        reduceby_bottom = reduceby
+    reduceby_map = {
+        BorderType.POLAROID: (32, 6),
+        BorderType.SMALL: (32, 32),
+        BorderType.MEDIUM: (16, 16),
+        BorderType.LARGE: (6, 6),
+    }
+    reduceby, reduceby_bottom = reduceby_map[border_type]
 
     border_size = get_border_size(imgw, imgh, reduceby)
     border_size_bottom = get_border_size(imgw, imgh, reduceby_bottom)
@@ -100,8 +97,8 @@ def draw_border(img: Image, border: Border) -> Image:
 
 def draw_exif(img: Image, exif: dict, border: Border) -> Image:
     centered = border.border_type in (BorderType.POLAROID, BorderType.LARGE)
-    font = create_font(round(border.bottom / 8))
-    heading_font = create_bold_font(round(border.bottom / 6))
+    font = create_font(max(round(border.bottom / 8), 10)) # min font size of 10
+    heading_font = create_bold_font(max(round(border.bottom / 6), 12)) # min font size of 12
     margin = heading_font.size / 2
     # 3 Lines of text. 1 heading, two normal.
     total_font_height = heading_font.size + (2 * margin) + (2 * font.size)
@@ -112,10 +109,12 @@ def draw_exif(img: Image, exif: dict, border: Border) -> Image:
 
     x = border.left
 
+    # TODO: Change exif layout on small and medium border to be on a single line instead of three lines.
+
     text = f"{exif['Make']} {exif['Model']}"
     text_img, y = draw_text_on_image(img, text, (x,y), centered, heading_font, fill=(100, 100, 100))
 
-    text = f"{exif['LensModel']}"
+    text = f"{exif['LensMake']} {exif['LensModel']}"
     text_img, y = draw_text_on_image(text_img, text, (x,y), centered, font, fill=(128, 128, 128))
 
     text = f"{exif['FocalLength']} {exif['FNumber']} {exif['ISOSpeedRatings']} {exif['ExposureTime']}"
@@ -123,7 +122,7 @@ def draw_exif(img: Image, exif: dict, border: Border) -> Image:
 
     return text_img
 
-def save(path: str, add_exif: bool, add_palette: bool, border_type: BorderType) -> str:
+def process_image(path: str, add_exif: bool, add_palette: bool, border_type: BorderType) -> str:
     """ Add a border to an image
     Supported image types ['jpg', 'jpeg', 'png'].
 
@@ -191,18 +190,35 @@ def save(path: str, add_exif: bool, add_palette: bool, border_type: BorderType) 
 
     return save_path
 
+def should_process_file(filename: str, include_patterns: list[str], exclude_patterns: list[str]) -> bool:
+    return any(fnmatch(filename, pattern) for pattern in include_patterns) and \
+           not any(fnmatch(filename, pattern) for pattern in exclude_patterns)
 
-if os.path.isdir(args.filename):
-    for file in os.listdir(args.filename):
-        print(f'Adding border to {file}')
-        save(os.path.join(args.filename, file), args.exif, args.palette, BorderType(args.border_type))
-else:
-    # print(f'Adding border to {args.filename}')
-    save_path = save(args.filename, args.exif, args.palette, BorderType(args.border_type))
-    print(save_path)
+def process_directory(directory: str, add_exif: bool, add_palette: bool, border_type: BorderType, recursive: bool, include_patterns: list[str], exclude_patterns: list[str]):
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            if should_process_file(file, include_patterns, exclude_patterns):
+                file_path = os.path.join(root, file)
+                print(f'Adding border to {file_path}')
+                save_path = process_image(file_path, add_exif, add_palette, border_type)
+                print(f'Saved as {save_path}')
 
-# from PIL import Image, ImageOps
-# for i in list-of-images:
-#   img = Image.open(i)
-#   img_with_border = ImageOps.expand(img,border=300,fill='black')
-#   img_with_border.save('bordered-%s' % i)
+        if not recursive:
+            break
+
+def main():
+    args = parse_arguments()
+
+    if os.path.isdir(args.path):
+        process_directory(args.path, args.exif, args.palette, args.border_type, args.recursive, args.include, args.exclude)
+    elif os.path.isfile(args.path):
+        if should_process_file(args.path, args.include, args.exclude):
+            save_path = process_image(args.path, args.exif, args.palette, args.border_type)
+            print(f'Saved as {save_path}')
+        else:
+            print(f'Skipping {args.path} as it does not match the include/exclude patterns')
+    else:
+        print(f'Error: {args.path} is not a valid file or directory')
+
+if __name__ == "__main__":
+    main()
