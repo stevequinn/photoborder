@@ -2,7 +2,6 @@
 Add a border to the image named in the first parameter.
 A new image with {filename}_bordered will be generated.
 TODO: Read up on sorting images by appearance https://github.com/Visual-Computing/LAS_FLAS/blob/main/README.md
-TODO: Change exif layout on small and medium border to be on a single line instead of three lines.
 """
 import os
 import math
@@ -97,28 +96,29 @@ def draw_border(img: Image, border: Border) -> Image:
 
 def draw_exif(img: Image, exif: dict, border: Border) -> Image:
     centered = border.border_type in (BorderType.POLAROID, BorderType.LARGE)
-    font = create_font(max(round(border.bottom / 8), 10)) # min font size of 10
+    font = create_font(max(round(border.bottom / 8), 11)) # min font size of 10
     heading_font = create_bold_font(max(round(border.bottom / 6), 12)) # min font size of 12
-    margin = heading_font.size / 2
-    # 3 Lines of text. 1 heading, two normal.
-    total_font_height = heading_font.size + (2 * margin) + (2 * font.size)
 
     # Vertical align text in bottom border based on total font block height.
-    y = img.height - border.bottom + \
-        (border.bottom / 2) - (total_font_height / 2)
+    if centered:
+         # 3 Lines of text. 1 heading, two normal. Minus heading margins. A bit sketchy but it aligns fine.
+        total_font_height = heading_font.size + (2 * font.size) - (heading_font.size / 2)
+        y = img.height - border.bottom + \
+            (border.bottom / 2) - (total_font_height / 2)
+    else:
+        # y = img.height - (border.bottom / 2) - (heading_font.size / 3)
+        y = img.height - (border.bottom / 2) + (heading_font.size / 3)
 
     x = border.left
 
-    # TODO: Change exif layout on small and medium border to be on a single line instead of three lines.
-
     text = f"{exif['Make']} {exif['Model']}"
-    text_img, y = draw_text_on_image(img, text, (x,y), centered, heading_font, fill=(100, 100, 100))
+    text_img, (x, y) = draw_text_on_image(img, text, (x,y), centered, heading_font, fill=(100, 100, 100))
 
     text = f"{exif['LensMake']} {exif['LensModel']}"
-    text_img, y = draw_text_on_image(text_img, text, (x,y), centered, font, fill=(128, 128, 128))
+    text_img, (x, y) = draw_text_on_image(text_img, text, (x,y), centered, font, fill=(128, 128, 128))
 
-    text = f"{exif['FocalLength']} {exif['FNumber']} {exif['ISOSpeedRatings']} {exif['ExposureTime']}"
-    text_img, y = draw_text_on_image(text_img, text, (x,y), centered, font, fill=(128, 128, 128))
+    text = f"{exif['FocalLength']}  {exif['FNumber']}  {exif['ISOSpeedRatings']}  {exif['ExposureTime']}"
+    text_img, (x, y) = draw_text_on_image(text_img, text, (x,y), centered, font, fill=(128, 128, 128))
 
     return text_img
 

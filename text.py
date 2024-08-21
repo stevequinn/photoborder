@@ -52,6 +52,7 @@ def draw_text_on_image(img: Image, text: str, xy: tuple, centered: bool,
 
     Returns:
         Image: The image with the text drawn on it.
+        xy (tuple): The xy position of the next drawing pos
     """
     # Create a draw object.
     # TODO: Creating this every time we want to draw a line is inefficient. Look into other options.
@@ -62,16 +63,19 @@ def draw_text_on_image(img: Image, text: str, xy: tuple, centered: bool,
 
     x, y = xy
 
+    # Get the width of the text line so we can return the finish x pos
+    w = draw.textlength(text, font=font)
+
     if centered:
-         # Get width and height of text
-        w = draw.textlength(text, font=font)
+        # Centre the starting x pos
         x = (img.width - w) / 2
 
     # Draw the actual text on the image.
-    draw.text((x, y), text, font=font, fill=fill)
+    draw.text((x, y), text, font=font, fill=fill, anchor="ls")
 
-    # Figure out next y position
-    next_y = y + font.size + (font.size / 2)
+    # Figure out next x, y positions
+    next_y = y + font.size + (font.size / 2) if centered else y
+    next_x = x if centered else x + w + (font.size / 2)
 
-    return img, next_y
+    return img, (next_x, next_y)
 
