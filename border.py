@@ -47,9 +47,9 @@ def parse_arguments():
     parser.add_argument('-r', '--recursive', action='store_true', default=False,
                         help='Process directories recursively')
     parser.add_argument('--include', nargs='+', default=['*.jpg', '*.jpeg', '*.png', '*.JPG', '*.JPEG', '*.PNG'],
-                        help='File patterns to include (default: *.jpg *.jpeg *.png)')
+                        help='File patterns to include (default: *.jpg *.jpeg *.png, *.JPG, *.JPEG, *.PNG')
     parser.add_argument('--exclude', nargs='+', default=["*_border*"],
-                        help='File patterns to exclude')
+                        help='File patterns to exclude (default: *_border*)')
     return parser.parse_args()
 
 def get_border_size(img_width: int, img_height: int, reduceby: int=4) -> int:
