@@ -20,7 +20,9 @@ options:
   -h, --help            show this help message and exit
   -e, --exif            print photo exif data on the border
   -p, --palette         Add colour palette to the photo border
-  -t, --border_type     Border Type: p for polaroid, s for small, m for medium, l for large
+  -t, --border_type     Border Type: p for polaroid, s for small, m for medium, l for large (default: s)
+  --include             File patterns to include (default: *.jpg *.jpeg *.png, *.JPG, *.JPEG, *.PNG)
+  --exclude             File patterns to exclude (default: *_border*)
 Made for fun and to solve a little problem.
 ```
 
