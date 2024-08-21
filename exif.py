@@ -76,8 +76,15 @@ def get_exif(img: Image) -> dict:
         for tag_id in exif_data:
             tag = TAGS.get(tag_id, tag_id)
             data = exif_data.get(tag_id)
+
             if isinstance(data, bytes):
-                data = data.decode()
+                try:
+                    data = data.decode()
+                except UnicodeDecodeError as e:
+                    # print(f'Error decoding tag {tag}', e)
+                    # Expect decoding errors, ust ignore as we don't need the exif these happen on.
+                    pass
+
             exif_dict[tag] = ExifItem(tag, data)
 
     # Print the EXIF data dictionary

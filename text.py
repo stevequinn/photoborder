@@ -79,3 +79,29 @@ def draw_text_on_image(img: Image, text: str, xy: tuple, centered: bool,
 
     return img, (next_x, next_y)
 
+def get_optimal_font_size(text, target_height, max_font_size=100, min_font_size=1):
+    """
+    Calculate the optimal font size based on a target height
+
+    Args:
+        text (str): Sample text to draw
+        target_height (int): The target height
+        max_font_size (int, optional): Max font size to return. Defaults to 100.
+        min_font_size (int, optional): Min font size to return. Defaults to 1.
+    """
+    def check_size(font_size):
+        # font = ImageFont.truetype(font_path, font_size)
+        font = ImageFont.load_default(font_size)
+        _, _, _, text_height = font.getbbox(text)
+        return text_height <= target_height
+
+    # Binary search for the optimal font size
+    low, high = min_font_size, max_font_size
+    while low <= high:
+        mid = (low + high) // 2
+        if check_size(mid):
+            low = mid + 1
+        else:
+            high = mid - 1
+
+    return high  # The largest font size that fits

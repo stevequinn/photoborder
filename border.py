@@ -12,7 +12,7 @@ from fnmatch import fnmatch
 from PIL import Image
 from exif import get_exif
 from palette import load_image_color_palette, overlay_palette
-from text import create_font, create_bold_font, draw_text_on_image
+from text import create_font, create_bold_font, draw_text_on_image, get_optimal_font_size
 
 class BorderType(Enum):
     POLAROID = 'p'
@@ -96,8 +96,11 @@ def draw_border(img: Image, border: Border) -> Image:
 
 def draw_exif(img: Image, exif: dict, border: Border) -> Image:
     centered = border.border_type in (BorderType.POLAROID, BorderType.LARGE)
-    font = create_font(max(round(border.bottom / 8), 11)) # min font size of 10
-    heading_font = create_bold_font(max(round(border.bottom / 6), 12)) # min font size of 12
+    multiplier = 0.2 if centered else 0.5
+    font_size = get_optimal_font_size("Test string", border.bottom * multiplier)
+    heading_font_size = get_optimal_font_size("Test string", border.bottom * (multiplier + 0.02))
+    font = create_font(font_size)
+    heading_font = create_bold_font(heading_font_size)
 
     # Vertical align text in bottom border based on total font block height.
     if centered:
