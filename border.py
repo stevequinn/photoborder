@@ -8,11 +8,11 @@ import math
 import argparse
 from enum import Enum
 from dataclasses import dataclass
-from fnmatch import fnmatch
 from PIL import Image
+import text as tm
 from exif import get_exif
+from filemanager import should_include_file, get_directory_files
 from palette import load_image_color_palette, overlay_palette
-from text import create_font, create_bold_font, draw_text_on_image, get_optimal_font_size
 
 class BorderType(Enum):
     POLAROID = 'p'
@@ -97,10 +97,10 @@ def draw_border(img: Image, border: Border) -> Image:
 def draw_exif(img: Image, exif: dict, border: Border) -> Image:
     centered = border.border_type in (BorderType.POLAROID, BorderType.LARGE)
     multiplier = 0.2 if centered else 0.5
-    font_size = get_optimal_font_size("Test string", border.bottom * multiplier)
-    heading_font_size = get_optimal_font_size("Test string", border.bottom * (multiplier + 0.02))
-    font = create_font(font_size)
-    heading_font = create_bold_font(heading_font_size)
+    font_size = tm.get_optimal_font_size("Test string", border.bottom * multiplier)
+    heading_font_size = tm.get_optimal_font_size("Test string", border.bottom * (multiplier + 0.02))
+    font = tm.create_font(font_size)
+    heading_font = tm.create_bold_font(heading_font_size)
 
     # Vertical align text in bottom border based on total font block height.
     if centered:
@@ -115,13 +115,13 @@ def draw_exif(img: Image, exif: dict, border: Border) -> Image:
     x = border.left
 
     text = f"{exif['Make']} {exif['Model']}"
-    text_img, (x, y) = draw_text_on_image(img, text, (x,y), centered, heading_font, fill=(100, 100, 100))
+    text_img, (x, y) = tm.draw_text_on_image(img, text, (x,y), centered, heading_font, fill=(100, 100, 100))
 
     text = f"{exif['LensMake']} {exif['LensModel']}"
-    text_img, (x, y) = draw_text_on_image(text_img, text, (x,y), centered, font, fill=(128, 128, 128))
+    text_img, (x, y) = tm.draw_text_on_image(text_img, text, (x,y), centered, font, fill=(128, 128, 128))
 
     text = f"{exif['FocalLength']}  {exif['FNumber']}  {exif['ISOSpeedRatings']}  {exif['ExposureTime']}"
-    text_img, (x, y) = draw_text_on_image(text_img, text, (x,y), centered, font, fill=(128, 128, 128))
+    text_img, (x, y) = tm.draw_text_on_image(text_img, text, (x,y), centered, font, fill=(128, 128, 128))
 
     return text_img
 
@@ -193,35 +193,25 @@ def process_image(path: str, add_exif: bool, add_palette: bool, border_type: Bor
 
     return save_path
 
-def should_process_file(filename: str, include_patterns: list[str], exclude_patterns: list[str]) -> bool:
-    return any(fnmatch(filename, pattern) for pattern in include_patterns) and \
-           not any(fnmatch(filename, pattern) for pattern in exclude_patterns)
-
-def process_directory(directory: str, add_exif: bool, add_palette: bool, border_type: BorderType, recursive: bool, include_patterns: list[str], exclude_patterns: list[str]):
-    for root, dirs, files in os.walk(directory):
-        for file in files:
-            if should_process_file(file, include_patterns, exclude_patterns):
-                file_path = os.path.join(root, file)
-                print(f'Adding border to {file_path}')
-                save_path = process_image(file_path, add_exif, add_palette, border_type)
-                print(f'Saved as {save_path}')
-
-        if not recursive:
-            break
-
 def main():
     args = parse_arguments()
+    paths = []
 
+    # Figure out paths to save based on include/exclude opts and allowable file types
     if os.path.isdir(args.path):
-        process_directory(args.path, args.exif, args.palette, args.border_type, args.recursive, args.include, args.exclude)
+        paths = get_directory_files(args.path, args.recursive, args.include, args.exclude)
     elif os.path.isfile(args.path):
-        if should_process_file(args.path, args.include, args.exclude):
-            save_path = process_image(args.path, args.exif, args.palette, args.border_type)
-            print(f'Saved as {save_path}')
+        if should_include_file(args.path, args.include, args.exclude):
+            paths.append(args.path)
         else:
             print(f'Skipping {args.path} as it does not match the include/exclude patterns')
     else:
         print(f'Error: {args.path} is not a valid file or directory')
+
+    for path in paths:
+        print(f'Adding border to {path}')
+        save_path = process_image(path, args.exif, args.palette, args.border_type)
+        print(f'Saved as {save_path}')
 
 if __name__ == "__main__":
     main()
