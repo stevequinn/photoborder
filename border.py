@@ -8,17 +8,18 @@ import math
 import argparse
 from enum import Enum
 from dataclasses import dataclass
-from fnmatch import fnmatch
 from PIL import Image
+import text as tm
 from exif import get_exif
+from filemanager import should_include_file, get_directory_files
 from palette import load_image_color_palette, overlay_palette
-from text import create_font, create_bold_font, draw_text_on_image, get_optimal_font_size
 
 class BorderType(Enum):
     POLAROID = 'p'
     SMALL = 's'
     MEDIUM = 'm'
     LARGE = 'l'
+    INSTAGRAM = 'i'
 
     def __str__(self):
         return self.value
@@ -43,7 +44,8 @@ def parse_arguments():
     parser.add_argument('-p', '--palette', action='store_true', default=False,
                         help='Add colour palette to the photo border')
     parser.add_argument('-t', '--border_type', type=BorderType, choices=list(BorderType),
-                        default=BorderType.SMALL, help='Border Type: p for polaroid, s for small, m for medium, l for large')
+                        default=BorderType.SMALL,
+                        help='Border Type: p for polaroid, s for small, m for medium, l for large, i for instagram')
     parser.add_argument('-r', '--recursive', action='store_true', default=False,
                         help='Process directories recursively')
     parser.add_argument('--include', nargs='+', default=['*.jpg', '*.jpeg', '*.png', '*.JPG', '*.JPEG', '*.PNG'],
@@ -71,18 +73,59 @@ def get_border_size(img_width: int, img_height: int, reduceby: int=4) -> int:
 
     return border_size
 
-def create_border(imgw: int, imgh: int, border_type: Border) -> Border:
-    reduceby_map = {
-        BorderType.POLAROID: (32, 6),
-        BorderType.SMALL: (32, 32),
-        BorderType.MEDIUM: (16, 16),
-        BorderType.LARGE: (6, 6),
-    }
-    reduceby, reduceby_bottom = reduceby_map[border_type]
+def calculate_ratio_border(width, height, min_border=0, target_ratio=4/5):
+    current_ratio = width / height
 
-    border_size = get_border_size(imgw, imgh, reduceby)
-    border_size_bottom = get_border_size(imgw, imgh, reduceby_bottom)
-    border = Border(border_size, border_size, border_size_bottom, border_size, border_type)
+    if current_ratio > target_ratio:
+        # Image is too wide, add vertical borders
+        new_height = max(height, math.ceil(width / target_ratio))
+        vertical_border = max((new_height - height) // 2, min_border)
+        horizontal_border = min_border
+    else:
+        # Image is too tall, add horizontal borders
+        new_width = max(width, math.ceil(height * target_ratio))
+        horizontal_border = max((new_width - width) // 2, min_border)
+        vertical_border = min_border
+
+    # Adjust to ensure the final image meets the target ratio
+    final_width = width + 2 * horizontal_border
+    final_height = height + 2 * vertical_border
+    final_ratio = final_width / final_height
+
+    if final_ratio > target_ratio:
+        additional_vertical = math.ceil(final_width / target_ratio) - final_height
+        vertical_border += additional_vertical // 2
+    elif final_ratio < target_ratio:
+        additional_horizontal = math.ceil(final_height * target_ratio) - final_width
+        horizontal_border += additional_horizontal // 2
+
+    return horizontal_border, vertical_border
+
+def create_border(imgw: int, imgh: int, border_type: Border) -> Border:
+    # top, right, bottom, left
+    reduceby_map = {
+        BorderType.POLAROID: (32, 32, 6, 32),
+        BorderType.SMALL: (32, 32, 32, 32),
+        BorderType.MEDIUM: (16, 16, 16, 16),
+        BorderType.LARGE: (6, 6, 6, 6),
+        BorderType.INSTAGRAM: (32, 32, 32, 32)
+    }
+    rtop, rright, rbottom, rleft = reduceby_map[border_type]
+    btop = get_border_size(imgw, imgh, rtop)
+    bright = get_border_size(imgw, imgh, rright)
+    bbottom = get_border_size(imgw, imgh, rbottom)
+    bleft = get_border_size(imgw, imgh, rleft)
+
+    if border_type == BorderType.INSTAGRAM:
+        # In the case of instagram, we want to enforce an image ratio of 4/5 with a minimum border so the
+        # non-padded sides also have a border.
+        ratio_border_horizonal, ratio_border_vertical = calculate_ratio_border(imgw, imgh, min_border=btop)
+        btop = ratio_border_vertical
+        bright = ratio_border_horizonal
+        bbottom = ratio_border_vertical
+        bleft = ratio_border_horizonal
+
+    border = Border(btop, bright, bbottom, bleft, border_type)
 
     return border
 
@@ -95,12 +138,12 @@ def draw_border(img: Image, border: Border) -> Image:
     return canvas
 
 def draw_exif(img: Image, exif: dict, border: Border) -> Image:
-    centered = border.border_type in (BorderType.POLAROID, BorderType.LARGE)
+    centered = border.border_type in (BorderType.POLAROID, BorderType.LARGE, BorderType.INSTAGRAM)
     multiplier = 0.2 if centered else 0.5
-    font_size = get_optimal_font_size("Test string", border.bottom * multiplier)
-    heading_font_size = get_optimal_font_size("Test string", border.bottom * (multiplier + 0.02))
-    font = create_font(font_size)
-    heading_font = create_bold_font(heading_font_size)
+    font_size = tm.get_optimal_font_size("Test string", border.bottom * multiplier)
+    heading_font_size = tm.get_optimal_font_size("Test string", border.bottom * (multiplier + 0.02))
+    font = tm.create_font(font_size)
+    heading_font = tm.create_bold_font(heading_font_size)
 
     # Vertical align text in bottom border based on total font block height.
     if centered:
@@ -115,13 +158,13 @@ def draw_exif(img: Image, exif: dict, border: Border) -> Image:
     x = border.left
 
     text = f"{exif['Make']} {exif['Model']}"
-    text_img, (x, y) = draw_text_on_image(img, text, (x,y), centered, heading_font, fill=(100, 100, 100))
+    text_img, (x, y) = tm.draw_text_on_image(img, text, (x,y), centered, heading_font, fill=(100, 100, 100))
 
     text = f"{exif['LensMake']} {exif['LensModel']}"
-    text_img, (x, y) = draw_text_on_image(text_img, text, (x,y), centered, font, fill=(128, 128, 128))
+    text_img, (x, y) = tm.draw_text_on_image(text_img, text, (x,y), centered, font, fill=(128, 128, 128))
 
     text = f"{exif['FocalLength']}  {exif['FNumber']}  {exif['ISOSpeedRatings']}  {exif['ExposureTime']}"
-    text_img, (x, y) = draw_text_on_image(text_img, text, (x,y), centered, font, fill=(128, 128, 128))
+    text_img, (x, y) = tm.draw_text_on_image(text_img, text, (x,y), centered, font, fill=(128, 128, 128))
 
     return text_img
 
@@ -193,35 +236,25 @@ def process_image(path: str, add_exif: bool, add_palette: bool, border_type: Bor
 
     return save_path
 
-def should_process_file(filename: str, include_patterns: list[str], exclude_patterns: list[str]) -> bool:
-    return any(fnmatch(filename, pattern) for pattern in include_patterns) and \
-           not any(fnmatch(filename, pattern) for pattern in exclude_patterns)
-
-def process_directory(directory: str, add_exif: bool, add_palette: bool, border_type: BorderType, recursive: bool, include_patterns: list[str], exclude_patterns: list[str]):
-    for root, dirs, files in os.walk(directory):
-        for file in files:
-            if should_process_file(file, include_patterns, exclude_patterns):
-                file_path = os.path.join(root, file)
-                print(f'Adding border to {file_path}')
-                save_path = process_image(file_path, add_exif, add_palette, border_type)
-                print(f'Saved as {save_path}')
-
-        if not recursive:
-            break
-
 def main():
     args = parse_arguments()
+    paths = []
 
+    # Figure out paths to save based on include/exclude opts and allowable file types
     if os.path.isdir(args.path):
-        process_directory(args.path, args.exif, args.palette, args.border_type, args.recursive, args.include, args.exclude)
+        paths = get_directory_files(args.path, args.recursive, args.include, args.exclude)
     elif os.path.isfile(args.path):
-        if should_process_file(args.path, args.include, args.exclude):
-            save_path = process_image(args.path, args.exif, args.palette, args.border_type)
-            print(f'Saved as {save_path}')
+        if should_include_file(args.path, args.include, args.exclude):
+            paths.append(args.path)
         else:
             print(f'Skipping {args.path} as it does not match the include/exclude patterns')
     else:
         print(f'Error: {args.path} is not a valid file or directory')
+
+    for path in paths:
+        print(f'Adding border to {path}')
+        save_path = process_image(path, args.exif, args.palette, args.border_type)
+        print(f'Saved as {save_path}')
 
 if __name__ == "__main__":
     main()
