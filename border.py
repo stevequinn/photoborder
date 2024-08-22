@@ -19,6 +19,7 @@ class BorderType(Enum):
     SMALL = 's'
     MEDIUM = 'm'
     LARGE = 'l'
+    INSTAGRAM = 'i'
 
     def __str__(self):
         return self.value
@@ -43,7 +44,8 @@ def parse_arguments():
     parser.add_argument('-p', '--palette', action='store_true', default=False,
                         help='Add colour palette to the photo border')
     parser.add_argument('-t', '--border_type', type=BorderType, choices=list(BorderType),
-                        default=BorderType.SMALL, help='Border Type: p for polaroid, s for small, m for medium, l for large')
+                        default=BorderType.SMALL,
+                        help='Border Type: p for polaroid, s for small, m for medium, l for large, i for instagram')
     parser.add_argument('-r', '--recursive', action='store_true', default=False,
                         help='Process directories recursively')
     parser.add_argument('--include', nargs='+', default=['*.jpg', '*.jpeg', '*.png', '*.JPG', '*.JPEG', '*.PNG'],
@@ -71,18 +73,59 @@ def get_border_size(img_width: int, img_height: int, reduceby: int=4) -> int:
 
     return border_size
 
-def create_border(imgw: int, imgh: int, border_type: Border) -> Border:
-    reduceby_map = {
-        BorderType.POLAROID: (32, 6),
-        BorderType.SMALL: (32, 32),
-        BorderType.MEDIUM: (16, 16),
-        BorderType.LARGE: (6, 6),
-    }
-    reduceby, reduceby_bottom = reduceby_map[border_type]
+def calculate_ratio_border(width, height, min_border=0, target_ratio=4/5):
+    current_ratio = width / height
 
-    border_size = get_border_size(imgw, imgh, reduceby)
-    border_size_bottom = get_border_size(imgw, imgh, reduceby_bottom)
-    border = Border(border_size, border_size, border_size_bottom, border_size, border_type)
+    if current_ratio > target_ratio:
+        # Image is too wide, add vertical borders
+        new_height = max(height, math.ceil(width / target_ratio))
+        vertical_border = max((new_height - height) // 2, min_border)
+        horizontal_border = min_border
+    else:
+        # Image is too tall, add horizontal borders
+        new_width = max(width, math.ceil(height * target_ratio))
+        horizontal_border = max((new_width - width) // 2, min_border)
+        vertical_border = min_border
+
+    # Adjust to ensure the final image meets the target ratio
+    final_width = width + 2 * horizontal_border
+    final_height = height + 2 * vertical_border
+    final_ratio = final_width / final_height
+
+    if final_ratio > target_ratio:
+        additional_vertical = math.ceil(final_width / target_ratio) - final_height
+        vertical_border += additional_vertical // 2
+    elif final_ratio < target_ratio:
+        additional_horizontal = math.ceil(final_height * target_ratio) - final_width
+        horizontal_border += additional_horizontal // 2
+
+    return horizontal_border, vertical_border
+
+def create_border(imgw: int, imgh: int, border_type: Border) -> Border:
+    # top, right, bottom, left
+    reduceby_map = {
+        BorderType.POLAROID: (32, 32, 6, 32),
+        BorderType.SMALL: (32, 32, 32, 32),
+        BorderType.MEDIUM: (16, 16, 16, 16),
+        BorderType.LARGE: (6, 6, 6, 6),
+        BorderType.INSTAGRAM: (32, 32, 32, 32)
+    }
+    rtop, rright, rbottom, rleft = reduceby_map[border_type]
+    btop = get_border_size(imgw, imgh, rtop)
+    bright = get_border_size(imgw, imgh, rright)
+    bbottom = get_border_size(imgw, imgh, rbottom)
+    bleft = get_border_size(imgw, imgh, rleft)
+
+    if border_type == BorderType.INSTAGRAM:
+        # In the case of instagram, we want to enforce an image ratio of 4/5 with a minimum border so the
+        # non-padded sides also have a border.
+        ratio_border_horizonal, ratio_border_vertical = calculate_ratio_border(imgw, imgh, min_border=btop)
+        btop = ratio_border_vertical
+        bright = ratio_border_horizonal
+        bbottom = ratio_border_vertical
+        bleft = ratio_border_horizonal
+
+    border = Border(btop, bright, bbottom, bleft, border_type)
 
     return border
 
@@ -95,7 +138,7 @@ def draw_border(img: Image, border: Border) -> Image:
     return canvas
 
 def draw_exif(img: Image, exif: dict, border: Border) -> Image:
-    centered = border.border_type in (BorderType.POLAROID, BorderType.LARGE)
+    centered = border.border_type in (BorderType.POLAROID, BorderType.LARGE, BorderType.INSTAGRAM)
     multiplier = 0.2 if centered else 0.5
     font_size = tm.get_optimal_font_size("Test string", border.bottom * multiplier)
     heading_font_size = tm.get_optimal_font_size("Test string", border.bottom * (multiplier + 0.02))
