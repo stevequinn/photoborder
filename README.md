@@ -9,7 +9,7 @@ A colour palette can be added to the border as well.
 ## Usage
 
 ```bash
-usage: python border.py [-h] [-e] [-p] filename
+usage: python border.py [-h] [-e] [-p] [-t{s,m,l,p,i}] filename
 
 Add a border and exif data to a jpg or png photo
 
