@@ -21,6 +21,19 @@ def format_shutter_speed(shutter_speed: str) -> str:
     except (ValueError, ZeroDivisionError):
         return shutter_speed
 
+def format_focal_length(focal_length: str) -> str:
+    """
+    Round Focal Length
+    """
+    try:
+        focal_length_dp = focal_length[::-1].find('.') #https://docs.python.org/dev/library/stdtypes.html#str.find
+        if focal_length_dp >= 2: # Checks if the focal length has 2 decimal places or greater eg 24.878mm
+            return round(float(focal_length), 2)
+        else:
+            return round(float(focal_length)) # Rounds focal length to nearest whole number if a single decimal point is present eg 24.0mm is 24mm
+    except ValueError:
+        return focal_length
+
 @dataclass
 class ExifItem:
     tag: str
@@ -42,6 +55,10 @@ class ExifItem:
         # Deal with any special case data formatting
         if self.tag == 'ExposureTime':
            fmt_data = format_shutter_speed(fmt_data)
+        
+        # Deal with any special case data formatting
+        if self.tag == 'FocalLength':
+           fmt_data = format_focal_length(fmt_data)
 
         # Apply the string template formatting defined in self.formatter
         if self.tag in self.formatter:
