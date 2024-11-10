@@ -62,6 +62,7 @@ def process_image(path: str, add_exif: bool, add_palette: bool, border_type: Bor
 
     if add_exif:
         exif = get_exif(img)
+        exifdata = img.getexif() #extracts original EXIF data from Image.open(path)
         if exif:
             img_with_border = draw_exif(img_with_border, exif, border)
             save_as = f'{save_as}_exif'
@@ -93,7 +94,7 @@ def process_image(path: str, add_exif: bool, add_palette: bool, border_type: Bor
     #
     # ref: https://stackoverflow.com/a/19303889
     save_path = f'{save_as}.{ext}'
-    img_with_border.save(save_path, subsampling=0, quality=95)
+    img_with_border.save(save_path, exif=exifdata, subsampling=0, quality=95)
 
     # Clean up
     img_with_border.close()
