@@ -28,7 +28,7 @@ def format_focal_length(focal_length: str) -> str:
     try:
         return round(float(focal_length), 2)
     except ValueError:
-        print("Not a float")
+        return focal_length
 
 @dataclass
 class ExifItem:
