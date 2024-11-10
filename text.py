@@ -92,8 +92,7 @@ def get_optimal_font_size(text, target_height, max_font_size=100, min_font_size=
         min_font_size (int, optional): Min font size to return. Defaults to 1.
     """
     def check_size(font_size):
-        # font = ImageFont.truetype(font_path, font_size)
-        font = ImageFont.load_default(font_size)
+        font = ImageFont.truetype(FONTNAME, font_size)
         _, _, _, text_height = font.getbbox(text)
         return text_height <= target_height
 
