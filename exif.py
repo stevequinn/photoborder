@@ -26,7 +26,7 @@ def format_focal_length(focal_length: str) -> str:
     Round Focal Length
     """
     try:
-        focal_length_dp = focal_length[::-1].find('.')
+        focal_length_dp = focal_length[::-1].find('.') #https://docs.python.org/dev/library/stdtypes.html#str.find
         if focal_length_dp >= 2: # Checks if the focal length has 2 decimal places or greater eg 24.878mm
             return round(float(focal_length), 2)
         else:
