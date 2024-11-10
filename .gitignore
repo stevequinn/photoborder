@@ -1,5 +1,6 @@
 .DS_Store
-images/
+/images
+/tests/images
 *.pyc
 .venv
 node_modules

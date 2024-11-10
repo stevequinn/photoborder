@@ -29,3 +29,20 @@ Made for fun and to solve a little problem.
 ---
 
 > Note: This is a hacked together little script. Use at your own peril...
+
+## Examples
+
+![alt text](doc/images/20241108_20241108DSCF0043_border-p_exif_palette.jpeg)
+*`> python main.py -t p -e -p image.jpeg`*
+
+![alt text](doc/images/20241108_20241108DSCF0043_border-s_exif.jpeg)
+*`> python main.py -t s -e image.jpeg`*
+
+![alt text](doc/images/20241108_20241108DSCF0043_border-m_exif.jpeg)
+*`> python main.py -t m -e image.jpeg`*
+
+![alt text](doc/images/20241108_20241108DSCF0043_border-l_exif.jpeg)
+*`> python main.py -t l -e image.jpeg`*
+
+![alt text](doc/images/20241108_20241108DSCF0043_border-i_exif.jpeg)
+*`> python main.py -t i -e image.jpeg`*
