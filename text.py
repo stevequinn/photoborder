@@ -1,14 +1,16 @@
 """
 Text on image functions
 """
+import os
 from PIL import Image, ImageDraw, ImageFont
 
-FONTDIR = "fonts/"
+MODULEDIR = os.path.dirname(os.path.abspath(__file__))
+FONTDIR = os.path.join(MODULEDIR, "fonts")
 # FONTNAME = f"{FONTDIR}Avenir.ttc"
 # BOLDFONTNAME = f"{FONTDIR}Roboto-Bold.ttf"
 # FONTINDEX = 8
-FONTNAME = f"{FONTDIR}Roboto-Regular.ttf"
-BOLDFONTNAME = f"{FONTDIR}Roboto-Medium.ttf"
+FONTNAME = os.path.join(FONTDIR, "Roboto-Regular.ttf")
+BOLDFONTNAME = os.path.join(FONTDIR, "Roboto-Medium.ttf")
 FONTINDEX = 0
 
 
