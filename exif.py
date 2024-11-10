@@ -21,6 +21,15 @@ def format_shutter_speed(shutter_speed: str) -> str:
     except (ValueError, ZeroDivisionError):
         return shutter_speed
 
+def format_focal_length(focal_length: str) -> str:
+    """
+    Round Focal Length
+    """
+    try:
+        return round(float(focal_length), 2)
+    except ValueError:
+        print("Not a float")
+
 @dataclass
 class ExifItem:
     tag: str
@@ -42,6 +51,10 @@ class ExifItem:
         # Deal with any special case data formatting
         if self.tag == 'ExposureTime':
            fmt_data = format_shutter_speed(fmt_data)
+        
+        # Deal with any special case data formatting
+        if self.tag == 'FocalLength':
+           fmt_data = format_focal_length(fmt_data)
 
         # Apply the string template formatting defined in self.formatter
         if self.tag in self.formatter:
