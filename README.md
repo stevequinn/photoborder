@@ -51,7 +51,7 @@ Adds quick actions to you OSX menu for quick deployment of tool.
 
 ## Fonts
 
-The repo comes with [Roboto]([url](https://fonts.google.com/specimen/Roboto) (Regular, Medium & Bold).
+The repo comes with [Roboto](https://fonts.google.com/specimen/Roboto) (Regular, Medium & Bold).
 
 ```photoborder/fonts```
 
