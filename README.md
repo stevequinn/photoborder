@@ -8,11 +8,17 @@ A colour palette can be added to the border as well.
 
 ## Installation
 
-```git clone https://github.com/stevequinn/photoborder```
+```bash 
+git clone https://github.com/stevequinn/photoborder
+```
 
-```cd photoborder```
+```bash
+cd photoborder
+```
 
-```pip install -r requirements.txt```
+```bash
+pip install -r requirements.txt
+```
 
 ## Usage
 
@@ -45,7 +51,14 @@ To be updated
 
 ## Fonts
 
-To be updated
+The repo comes with Roboto (Regular, Medium & Bold) & Avenir (Regular)
+
+```photoborder/fonts```
+
+Should you wish to use another font you will need to manually update ```text.py```
+
+```FONTNAME = os.path.join(FONTDIR, "Roboto-Regular.ttf")```
+```BOLDFONTNAME = os.path.join(FONTDIR, "Roboto-Medium.ttf")```
 
 ## Examples
 
