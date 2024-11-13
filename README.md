@@ -39,6 +39,14 @@ Made for fun and to solve a little problem.
 
 > Note: This is a hacked together little script. Use at your own peril...
 
+## osx_services
+
+To be updated
+
+## Fonts
+
+To be updated
+
 ## Examples
 
 ![alt text](doc/images/20241108_20241108DSCF0043_border-p_exif_palette.jpeg)
