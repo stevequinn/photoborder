@@ -6,6 +6,14 @@ Exif data can also be extracted and added to the border if the mood strikes.
 
 A colour palette can be added to the border as well.
 
+## Installation
+
+```git clone https://github.com/stevequinn/photoborder```
+
+```cd photoborder```
+
+```pip install -r requirements.txt```
+
 ## Usage
 
 ```bash
@@ -23,6 +31,7 @@ options:
   -t, --border_type     Border Type: p for polaroid, s for small, m for medium, l for large, i for instagram (default: s)
   --include             File patterns to include (default: *.jpg *.jpeg *.png, *.JPG, *.JPEG, *.PNG)
   --exclude             File patterns to exclude (default: *_border*)
+
 Made for fun and to solve a little problem.
 ```
 
