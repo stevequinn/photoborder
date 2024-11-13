@@ -47,7 +47,7 @@ Made for fun and to solve a little problem.
 
 ## osx_services
 
-To be updated
+Adds quick actions to you OSX menu for quick deployment of tool.
 
 ## Fonts
 
