@@ -57,8 +57,8 @@ The repo comes with Roboto (Regular, Medium & Bold) & Avenir (Regular)
 
 Should you wish to use another font you will need to manually update ```text.py```
 
-```FONTNAME = os.path.join(FONTDIR, "Roboto-Regular.ttf")```
-```BOLDFONTNAME = os.path.join(FONTDIR, "Roboto-Medium.ttf")```
+- ```FONTNAME = os.path.join(FONTDIR, "Roboto-Regular.ttf")```
+- ```BOLDFONTNAME = os.path.join(FONTDIR, "Roboto-Medium.ttf")```
 
 ## Examples
 
