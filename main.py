@@ -1,8 +1,3 @@
-"""
-Add a border to the image named in the first parameter.
-A new image with {filename}_bordered will be generated.
-TODO: Read up on sorting images by appearance https://github.com/Visual-Computing/LAS_FLAS/blob/main/README.md
-"""
 import os
 import argparse
 from PIL import Image
@@ -11,19 +6,33 @@ from filemanager import should_include_file, get_directory_files
 from palette import load_image_color_palette, overlay_palette
 from border import BorderType, create_border, draw_border, draw_exif
 
+def validate_font(fontname: str) -> bool:
+    """Validate if the font exists in the font directory
+    
+    Args:
+        fontname (str): Path to the font file
+    
+    Returns:
+        bool: True if font exists, otherwise False
+    """
+    if not os.path.isfile(fontname):
+        print(f"Error: Font '{fontname}' not found in the font directory.")
+        return False
+    return True
+    
 def parse_arguments():
     parser = argparse.ArgumentParser(
         prog='python border.py',
         description='Add a border and exif data to jpg or png photos',
         epilog='Made for fun and to solve a little problem.'
     )
-    parser.add_argument('path', help='File or directory path')
+    parser.add_argument('path', 
+                        help='File or directory path')
     parser.add_argument('-e', '--exif', action='store_true', default=False,
                         help='Print photo exif data on the border')
     parser.add_argument('-p', '--palette', action='store_true', default=False,
                         help='Add colour palette to the photo border')
-    parser.add_argument('-t', '--border_type', type=BorderType, choices=list(BorderType),
-                        default=BorderType.SMALL,
+    parser.add_argument('-t', '--border_type', type=BorderType, choices=list(BorderType), default=BorderType.SMALL,
                         help='Border Type: p for polaroid, s for small, m for medium, l for large, i for instagram')
     parser.add_argument('-r', '--recursive', action='store_true', default=False,
                         help='Process directories recursively')
@@ -31,9 +40,13 @@ def parse_arguments():
                         help='File patterns to include (default: *.jpg *.jpeg *.png, *.JPG, *.JPEG, *.PNG')
     parser.add_argument('--exclude', nargs='+', default=["*_border*"],
                         help='File patterns to exclude (default: *_border*)')
+    parser.add_argument('-f', '--font', default='Roboto-Regular.ttf', 
+                        help='Font file in fonts directory')
+    parser.add_argument('-fb', '--fontbold', default='Roboto-Medium.ttf', 
+                        help='Bold font file in fonts directory')
     return parser.parse_args()
 
-def process_image(path: str, add_exif: bool, add_palette: bool, border_type: BorderType) -> str:
+def process_image(path: str, add_exif: bool, add_palette: bool, border_type: BorderType, fontname: str, boldfontname: str) -> str:
     """ Add a border to an image
     Supported image types ['jpg', 'jpeg', 'png'].
 
@@ -43,7 +56,8 @@ def process_image(path: str, add_exif: bool, add_palette: bool, border_type: Bor
         add_palette (bool): Add colour palette information to the border.
                             Currently only supported on Polaroid border types.
         border_type (BorderType): The type of border to add to the photo.
-
+        fontname (str): Path to the font file
+        boldfontname (str): Path to the bold font file
     """
     filetypes = ['jpg', 'jpeg', 'png']
     path_dot_parts = path.split('.')
@@ -63,7 +77,7 @@ def process_image(path: str, add_exif: bool, add_palette: bool, border_type: Bor
     if add_exif:
         exif = get_exif(img)
         if exif:
-            img_with_border = draw_exif(img_with_border, exif, border)
+            img_with_border = draw_exif(img_with_border, exif, border, fontname, boldfontname)
             save_as = f'{save_as}_exif'
 
     if add_palette:
@@ -106,6 +120,11 @@ def main():
     args = parse_arguments()
     paths = []
 
+    MODULEDIR = os.path.dirname(os.path.abspath(__file__))
+    FONTDIR = os.path.join(MODULEDIR, "fonts")
+    font_path = os.path.join(FONTDIR, args.font)
+    bold_font_path = os.path.join(FONTDIR, args.fontbold)
+
     # Figure out paths to save based on include/exclude opts and allowable file types
     if os.path.isdir(args.path):
         paths = get_directory_files(args.path, args.recursive, args.include, args.exclude)
@@ -119,7 +138,7 @@ def main():
 
     for path in paths:
         print(f'Adding border to {path}')
-        save_path = process_image(path, args.exif, args.palette, args.border_type)
+        save_path = process_image(path, args.exif, args.palette, args.border_type, font_path, bold_font_path)
         print(f'Saved as {save_path}')
 
 if __name__ == "__main__":
