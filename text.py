@@ -2,17 +2,14 @@
 Text on image functions
 """
 import os
+from argparse import ArgumentParser
 from PIL import Image, ImageDraw, ImageFont
 
 MODULEDIR = os.path.dirname(os.path.abspath(__file__))
 FONTDIR = os.path.join(MODULEDIR, "fonts")
-# FONTNAME = f"{FONTDIR}Avenir.ttc"
-# BOLDFONTNAME = f"{FONTDIR}Roboto-Bold.ttf"
-# FONTINDEX = 8
-FONTNAME = os.path.join(FONTDIR, "Roboto-Regular.ttf")
-BOLDFONTNAME = os.path.join(FONTDIR, "Roboto-Medium.ttf")
+FONTNAME = os.path.join(FONTDIR, args.font)
+BOLDFONTNAME = os.path.join(FONTDIR, args.fontbold)
 FONTINDEX = 0
-
 
 def create_font(size: int, fontname=FONTNAME) -> ImageFont.FreeTypeFont:
     """Create the font object

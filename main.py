@@ -17,13 +17,13 @@ def parse_arguments():
         description='Add a border and exif data to jpg or png photos',
         epilog='Made for fun and to solve a little problem.'
     )
-    parser.add_argument('path', help='File or directory path')
+    parser.add_argument('path', 
+                        help='File or directory path')
     parser.add_argument('-e', '--exif', action='store_true', default=False,
                         help='Print photo exif data on the border')
     parser.add_argument('-p', '--palette', action='store_true', default=False,
                         help='Add colour palette to the photo border')
-    parser.add_argument('-t', '--border_type', type=BorderType, choices=list(BorderType),
-                        default=BorderType.SMALL,
+    parser.add_argument('-t', '--border_type', type=BorderType, choices=list(BorderType), default=BorderType.SMALL,
                         help='Border Type: p for polaroid, s for small, m for medium, l for large, i for instagram')
     parser.add_argument('-r', '--recursive', action='store_true', default=False,
                         help='Process directories recursively')
@@ -31,6 +31,10 @@ def parse_arguments():
                         help='File patterns to include (default: *.jpg *.jpeg *.png, *.JPG, *.JPEG, *.PNG')
     parser.add_argument('--exclude', nargs='+', default=["*_border*"],
                         help='File patterns to exclude (default: *_border*)')
+    parser.add_argument('-f', '--font', default='Roboto-Regular.ttf', 
+                        help='Font file in fonts directory')
+    parser.add_argument('-fb', '--fontbold', default='Roboto-Medium.ttf', 
+                        help='Bold font file in fonts directory')
     return parser.parse_args()
 
 def process_image(path: str, add_exif: bool, add_palette: bool, border_type: BorderType) -> str:
