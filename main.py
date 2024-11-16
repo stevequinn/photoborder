@@ -4,7 +4,7 @@
  TODO: Read up on sorting images by appearance https://github.com/Visual-Computing/LAS_FLAS/blob/main/README.md
  """
  
- import os
+import os
 import argparse
 from PIL import Image
 from exif import get_exif
