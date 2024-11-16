@@ -17,7 +17,7 @@ def validate_font(fontname: str) -> bool:
     """
     if not os.path.isfile(fontname):
         print(f"Error: Font '{fontname}' not found in the font directory.")
-        exit(1)
+        return False
     return True
 
 def create_font(size: int, fontname: str) -> ImageFont.FreeTypeFont:
@@ -30,8 +30,8 @@ def create_font(size: int, fontname: str) -> ImageFont.FreeTypeFont:
     Returns:
         ImageFont.FreeTypeFont: The created font
     """
-    #if not validate_font(fontname):
-    #    exit(1)
+   # if not validate_font(fontname):
+   #     exit(1)
     font = ImageFont.truetype(fontname, size)
     return font
 

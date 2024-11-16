@@ -11,20 +11,7 @@ from exif import get_exif
 from filemanager import should_include_file, get_directory_files
 from palette import load_image_color_palette, overlay_palette
 from border import BorderType, create_border, draw_border, draw_exif
-
-def validate_font(fontname: str) -> bool:
-    """Validate if the font exists in the font directory
-    
-    Args:
-        fontname (str): Path to the font file
-    
-    Returns:
-        bool: True if font exists, otherwise False
-    """
-    if not os.path.isfile(fontname):
-        print(f"Error: Font '{fontname}' not found in the font directory.")
-        return False
-    return True
+from text import validate_font
     
 def parse_arguments():
     parser = argparse.ArgumentParser(
@@ -130,6 +117,18 @@ def main():
     FONTDIR = os.path.join(MODULEDIR, "fonts")
     font_path = os.path.join(FONTDIR, args.font)
     bold_font_path = os.path.join(FONTDIR, args.fontbold)
+
+    # Validate fonts before processing any images
+    error_messages = []
+    if not validate_font(font_path):
+        error_messages.append(f"Error: Font '{font_path}' not found in the font directory.")
+    if not validate_font(bold_font_path):
+        error_messages.append(f"Error: Font '{bold_font_path}' not found in the font directory.")
+    
+    if error_messages:
+        for message in error_messages:
+            print(message)
+        exit(1)
 
     # Figure out paths to save based on include/exclude opts and allowable file types
     if os.path.isdir(args.path):
