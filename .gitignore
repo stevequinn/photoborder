@@ -4,3 +4,7 @@
 *.pyc
 .venv
 node_modules
+fonts/*.ttf
+*.jpg
+*.jpeg
+*.png
