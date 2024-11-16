@@ -1,4 +1,10 @@
-import os
+"""
+ Add a border to the image named in the first parameter.
+ A new image with {filename}_bordered will be generated.
+ TODO: Read up on sorting images by appearance https://github.com/Visual-Computing/LAS_FLAS/blob/main/README.md
+ """
+ 
+ import os
 import argparse
 from PIL import Image
 from exif import get_exif
