@@ -6,6 +6,20 @@ from filemanager import should_include_file, get_directory_files
 from palette import load_image_color_palette, overlay_palette
 from border import BorderType, create_border, draw_border, draw_exif
 
+def validate_font(fontname: str) -> bool:
+    """Validate if the font exists in the font directory
+    
+    Args:
+        fontname (str): Path to the font file
+    
+    Returns:
+        bool: True if font exists, otherwise False
+    """
+    if not os.path.isfile(fontname):
+        print(f"Error: Font '{fontname}' not found in the font directory.")
+        return False
+    return True
+    
 def parse_arguments():
     parser = argparse.ArgumentParser(
         prog='python border.py',

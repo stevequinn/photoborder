@@ -6,6 +6,20 @@ from PIL import Image, ImageDraw, ImageFont
 
 FONTINDEX = 0
 
+def validate_font(fontname: str) -> bool:
+    """Validate if the font exists in the font directory
+    
+    Args:
+        fontname (str): Path to the font file
+    
+    Returns:
+        bool: True if font exists, otherwise False
+    """
+    if not os.path.isfile(fontname):
+        print(f"Error: Font '{fontname}' not found in the font directory.")
+        exit(1)
+    return True
+
 def create_font(size: int, fontname: str) -> ImageFont.FreeTypeFont:
     """Create the font object
 
@@ -16,6 +30,8 @@ def create_font(size: int, fontname: str) -> ImageFont.FreeTypeFont:
     Returns:
         ImageFont.FreeTypeFont: The created font
     """
+    #if not validate_font(fontname):
+    #    exit(1)
     font = ImageFont.truetype(fontname, size)
     return font
 
@@ -29,6 +45,8 @@ def create_bold_font(size: int, fontname: str) -> ImageFont.FreeTypeFont:
     Returns:
         ImageFont.FreeTypeFont: The created bold font
     """
+    #if not validate_font(fontname):
+    #    exit(1)
     font = ImageFont.truetype(fontname, size, index=FONTINDEX)
     return font
 
@@ -48,6 +66,10 @@ def draw_text_on_image(img: Image, text: str, xy: tuple, centered: bool,
         Image: The image with the text drawn on it.
         xy (tuple): The xy position of the next drawing pos
     """
+    if font is None:
+        print("Error: Invalid font. Text will not be drawn.")
+        return img, xy
+
     draw = ImageDraw.Draw(img)
     draw.fontmode = 'L'
 
@@ -75,6 +97,9 @@ def get_optimal_font_size(text, target_height, fontname, max_font_size=100, min_
         max_font_size (int, optional): Max font size to return. Defaults to 100.
         min_font_size (int, optional): Min font size to return. Defaults to 1.
     """
+    if not validate_font(fontname):
+        return min_font_size
+
     def check_size(font_size):
         font = ImageFont.truetype(fontname, font_size)
         _, _, _, text_height = font.getbbox(text)
