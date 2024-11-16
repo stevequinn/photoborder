@@ -30,8 +30,6 @@ def create_font(size: int, fontname: str) -> ImageFont.FreeTypeFont:
     Returns:
         ImageFont.FreeTypeFont: The created font
     """
-   # if not validate_font(fontname):
-   #     exit(1)
     font = ImageFont.truetype(fontname, size)
     return font
 
@@ -45,8 +43,6 @@ def create_bold_font(size: int, fontname: str) -> ImageFont.FreeTypeFont:
     Returns:
         ImageFont.FreeTypeFont: The created bold font
     """
-    #if not validate_font(fontname):
-    #    exit(1)
     font = ImageFont.truetype(fontname, size, index=FONTINDEX)
     return font
 

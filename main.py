@@ -125,9 +125,7 @@ def main():
     if not validate_font(bold_font_path):
         error_messages.append(f"Error: Font '{bold_font_path}' not found in the font directory.")
     
-    if error_messages:
-        for message in error_messages:
-            print(message)
+    if not os.path.isfile(font_path) or not os.path.isfile(bold_font_path):
         exit(1)
 
     # Figure out paths to save based on include/exclude opts and allowable file types
