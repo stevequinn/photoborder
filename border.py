@@ -123,13 +123,13 @@ def draw_border(img: Image, border: Border) -> Image:
 
     return canvas
 
-def draw_exif(img: Image, exif: dict, border: Border) -> Image:
+def draw_exif(img: Image, exif: dict, border: Border, fontname: str, boldfontname: str) -> Image:
     centered = border.border_type in (BorderType.POLAROID, BorderType.LARGE, BorderType.INSTAGRAM)
     multiplier = 0.2 if centered else 0.5
-    font_size = tm.get_optimal_font_size("Test string", border.bottom * multiplier)
-    heading_font_size = tm.get_optimal_font_size("Test string", border.bottom * (multiplier + 0.02))
-    font = tm.create_font(font_size)
-    heading_font = tm.create_bold_font(heading_font_size)
+    font_size = tm.get_optimal_font_size("Test string", border.bottom * multiplier, fontname)
+    heading_font_size = tm.get_optimal_font_size("Test string", border.bottom * (multiplier + 0.02), boldfontname)
+    font = tm.create_font(font_size, fontname)
+    heading_font = tm.create_bold_font(heading_font_size, boldfontname)
 
     # Vertical align text in bottom border based on total font block height.
     if centered:
