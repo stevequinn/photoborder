@@ -6,6 +6,7 @@
 
 import os
 import argparse
+import logging
 from PIL import Image
 from exif import get_exif
 from filemanager import should_include_file, get_directory_files
@@ -13,6 +14,11 @@ from palette import load_image_color_palette, overlay_palette
 from border import BorderType, create_border, draw_border, draw_exif
 from text import validate_font
 
+# Enable logging
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+)
+logger = logging.getLogger(__name__)
 
 def parse_arguments():
     parser = argparse.ArgumentParser(
@@ -60,7 +66,7 @@ def process_image(path: str, add_exif: bool, add_palette: bool, border_type: Bor
     filename = ".".join(path_dot_parts[:-1])
 
     if not ext or ext.lower() not in filetypes:
-        print(f'ERROR: image must be one of {filetypes}')
+        logger.error(f'Image must be one of {filetypes}')
         return
 
     exif = None
@@ -78,7 +84,7 @@ def process_image(path: str, add_exif: bool, add_palette: bool, border_type: Bor
             bold_font_path = os.path.join(fontdir, boldfontname)
 
             # Validate fonts before processing any images
-            error_messages = [f"Error: Font '{f}' not found in the font directory." for f in [
+            error_messages = [f"Font '{f}' not found in the font directory." for f in [
                 font_path, bold_font_path] if not validate_font(f)]
             if len(error_messages) > 0:
                 raise ValueError(error_messages)
@@ -134,18 +140,17 @@ def main():
         if should_include_file(args.path, args.include, args.exclude):
             paths.append(args.path)
         else:
-            print(f'Skipping {args.path} as it does not match the include/exclude patterns')
+            logger.info(f'Skipping {args.path} as it does not match the include/exclude patterns')
     else:
-        print(f'Error: {args.path} is not a valid file or directory')
+        logger.error(f'{args.path} is not a valid file or directory')
 
     for path in paths:
-        print(f'Adding border to {path}')
+        logger.info(f'Adding border to {path}')
         save_path = process_image(path, args.exif, args.palette, args.border_type, args.font, args.fontbold)
-        print(f'Saved as {save_path}')
-
+        logger.info(f'Saved as {save_path}')
 
 if __name__ == "__main__":
     try:
         main()
     except ValueError as e:
-        print(e)
+        logger.error(e)
