@@ -4,46 +4,28 @@ Text on image functions
 import os
 from PIL import Image, ImageDraw, ImageFont
 
-FONTINDEX = 0
+def validate_font(fontpath: str) -> bool:
+    """Validate if the font exists
 
-def validate_font(fontname: str) -> bool:
-    """Validate if the font exists in the font directory
-    
     Args:
-        fontname (str): Path to the font file
-    
+        fontpath (str): Path to the font file
+
     Returns:
         bool: True if font exists, otherwise False
     """
-    if not os.path.isfile(fontname):
-        print(f"Error: Font '{fontname}' not found in the font directory.")
-        return False
-    return True
+    return os.path.isfile(fontpath)
 
-def create_font(size: int, fontname: str) -> ImageFont.FreeTypeFont:
+def create_font(size: int, fontpath: str) -> ImageFont.FreeTypeFont:
     """Create the font object
 
     Args:
         size (int): Pixel size
-        fontname (str): Path to the font file
+        fontpath(str): Path to the font file
 
     Returns:
         ImageFont.FreeTypeFont: The created font
     """
-    font = ImageFont.truetype(fontname, size)
-    return font
-
-def create_bold_font(size: int, fontname: str) -> ImageFont.FreeTypeFont:
-    """Create the bold font object
-
-    Args:
-        size (int): Pixel size
-        fontname (str): Path to the bold font file
-
-    Returns:
-        ImageFont.FreeTypeFont: The created bold font
-    """
-    font = ImageFont.truetype(fontname, size, index=FONTINDEX)
+    font = ImageFont.truetype(fontpath, size)
     return font
 
 def draw_text_on_image(img: Image, text: str, xy: tuple, centered: bool,
@@ -62,23 +44,20 @@ def draw_text_on_image(img: Image, text: str, xy: tuple, centered: bool,
         Image: The image with the text drawn on it.
         xy (tuple): The xy position of the next drawing pos
     """
-    if font is None:
-        print("Error: Invalid font. Text will not be drawn.")
-        return img, xy
-
     # Create a draw object.
     # TODO: Creating this every time we want to draw a line is inefficient. Look into other options.
     draw = ImageDraw.Draw(img)
 
-    # Enable antialiasing    
+    # Enable antialiasing
     draw.fontmode = 'L'
 
     x, y = xy
-  
+
     # Get the width of the text line so we can return the finish x pos
     w = draw.textlength(text, font=font)
 
     if centered:
+        # Center the starting x pos
         x = (img.width - w) / 2
 
     # Draw the actual text on the image.
@@ -90,22 +69,20 @@ def draw_text_on_image(img: Image, text: str, xy: tuple, centered: bool,
 
     return img, (next_x, next_y)
 
-def get_optimal_font_size(text, target_height, fontname, max_font_size=100, min_font_size=1):
+def get_optimal_font_size(text, target_height, fontpath, max_font_size=100, min_font_size=1):
     """
     Calculate the optimal font size based on a target height
 
     Args:
         text (str): Sample text to draw
         target_height (int): The target height
-        fontname (str): Path to the font file
+        fontpath: (str): The path of the font to determine the size for.
         max_font_size (int, optional): Max font size to return. Defaults to 100.
         min_font_size (int, optional): Min font size to return. Defaults to 1.
     """
-    if not validate_font(fontname):
-        return min_font_size
-
     def check_size(font_size):
-        font = ImageFont.truetype(fontname, font_size)
+        font = ImageFont.truetype(fontpath, font_size)
+        font.size = font_size
         _, _, _, text_height = font.getbbox(text)
         return text_height <= target_height
 
