@@ -5,5 +5,3 @@ def test_ExifItem():
     assert str(itm) == '23mm'
     itm = ExifItem('UnknownItem', ' Bleh  ')
     assert str(itm) == 'Bleh'
-
-

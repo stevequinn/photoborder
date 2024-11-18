@@ -8,7 +8,7 @@ A colour palette can be added to the border as well.
 
 ## Installation
 
-```bash 
+```bash
 git clone https://github.com/stevequinn/photoborder
 ```
 
@@ -58,6 +58,22 @@ The repo comes with [Roboto](https://fonts.google.com/specimen/Roboto) (Regular,
 ```photoborder/fonts```
 
 Should you wish to use another font you should add it to the ```fonts``` directory and use the appropriate arguments
+
+## Testing
+
+There are some very simple tests available in the `tests/` directory.
+
+You can run these with:
+
+```bash
+pytest -s ./tests
+```
+
+For specific test modules just do the same for the file like so:
+
+```bash
+pytest -s ./tests/test_text.py
+```
 
 ## Examples
 

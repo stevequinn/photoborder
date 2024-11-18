@@ -2,30 +2,68 @@
 Text on image functions
 """
 import os
+from typing import List, TypeVar
 from PIL import Image, ImageDraw, ImageFont
 
-def validate_font(fontpath: str) -> bool:
-    """Validate if the font exists
+T = TypeVar('T')
+
+def load_font_variants(fontpath: str) -> List[T]:
+    """Try loading the different font variant indices.
 
     Args:
         fontpath (str): Path to the font file
 
     Returns:
-        bool: True if font exists, otherwise False
+        [(index, {'family': str, 'style': str})]: A list containing the available font variants
     """
-    return os.path.isfile(fontpath)
+    variants = []
+    index = 0
 
-def create_font(size: int, fontpath: str) -> ImageFont.FreeTypeFont:
+    while True:
+        try:
+            font = ImageFont.truetype(fontpath, size=12, index=index)
+            info = {
+                'family': font.getname()[0],
+                'style': font.getname()[1]
+            }
+            variants.append((index, info))
+            index += 1
+        except Exception:
+            break
+
+    return variants
+
+def validate_font(fontpath: str, index: int) -> bool:
+    """Validate if the font exists and contains a variant index
+
+    Args:
+        fontpath (str): Path to the font file
+        index (int): The font variant index.
+
+    Returns:
+        str: None if font exists, otherwise an error message.
+    """
+    if not os.path.isfile(fontpath):
+        return f'Font {fontpath} does not exist.'
+
+    font_variants = load_font_variants(fontpath)
+    if not any(variant[0] == index for variant in font_variants):
+        return f'Font {fontpath} does not contain a variant with index: {index}. Available variants: {font_variants}'
+
+    return None
+
+def create_font(size: int, fontpath: str, index: int = 0) -> ImageFont.FreeTypeFont:
     """Create the font object
 
     Args:
         size (int): Pixel size
-        fontpath(str): Path to the font file
+        fontpath (str): Path to the font file
+        index (int): The font variant index. Defaults to 0.
 
     Returns:
         ImageFont.FreeTypeFont: The created font
     """
-    font = ImageFont.truetype(fontpath, size)
+    font = ImageFont.truetype(fontpath, size, index)
     return font
 
 def draw_text_on_image(img: Image, text: str, xy: tuple, centered: bool,
@@ -69,7 +107,7 @@ def draw_text_on_image(img: Image, text: str, xy: tuple, centered: bool,
 
     return img, (next_x, next_y)
 
-def get_optimal_font_size(text, target_height, fontpath, max_font_size=100, min_font_size=1):
+def get_optimal_font_size(text, target_height, fontpath, index, max_font_size=100, min_font_size=1):
     """
     Calculate the optimal font size based on a target height
 
@@ -77,11 +115,12 @@ def get_optimal_font_size(text, target_height, fontpath, max_font_size=100, min_
         text (str): Sample text to draw
         target_height (int): The target height
         fontpath: (str): The path of the font to determine the size for.
+        index (int): The font variant index.
         max_font_size (int, optional): Max font size to return. Defaults to 100.
         min_font_size (int, optional): Min font size to return. Defaults to 1.
     """
     def check_size(font_size):
-        font = ImageFont.truetype(fontpath, font_size)
+        font = ImageFont.truetype(fontpath, font_size, index)
         font.size = font_size
         _, _, _, text_height = font.getbbox(text)
         return text_height <= target_height
