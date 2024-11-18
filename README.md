@@ -6,10 +6,24 @@ Exif data can also be extracted and added to the border if the mood strikes.
 
 A colour palette can be added to the border as well.
 
+## Installation
+
+```bash 
+git clone https://github.com/stevequinn/photoborder
+```
+
+```bash
+cd photoborder
+```
+
+```bash
+pip install -r requirements.txt
+```
+
 ## Usage
 
 ```bash
-usage: python main.py [-h] [-e] [-p] [-t{s,m,l,p,i}] filename
+usage: python main.py [-h] [-e] [-p] [-f] [-fb] [-t{s,m,l,p,i}] filename
 
 Add a border and exif data to a jpg or png photo
 
@@ -21,14 +35,29 @@ options:
   -e, --exif            print photo exif data on the border
   -p, --palette         Add colour palette to the photo border
   -t, --border_type     Border Type: p for polaroid, s for small, m for medium, l for large, i for instagram (default: s)
+  -f, -font             Font Typeface to use
+  -fb, --font bold      Bold Font Typeface to use
   --include             File patterns to include (default: *.jpg *.jpeg *.png, *.JPG, *.JPEG, *.PNG)
   --exclude             File patterns to exclude (default: *_border*)
+
 Made for fun and to solve a little problem.
 ```
 
 ---
 
 > Note: This is a hacked together little script. Use at your own peril...
+
+## osx_services
+
+Adds quick actions to you OSX menu for quick deployment of tool.
+
+## Fonts
+
+The repo comes with [Roboto](https://fonts.google.com/specimen/Roboto) (Regular, Medium & Bold).
+
+```photoborder/fonts```
+
+Should you wish to use another font you should add it to the ```fonts``` directory and use the appropriate arguments
 
 ## Examples
 

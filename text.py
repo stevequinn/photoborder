@@ -4,41 +4,29 @@ Text on image functions
 import os
 from PIL import Image, ImageDraw, ImageFont
 
-MODULEDIR = os.path.dirname(os.path.abspath(__file__))
-FONTDIR = os.path.join(MODULEDIR, "fonts")
-# FONTNAME = f"{FONTDIR}Avenir.ttc"
-# BOLDFONTNAME = f"{FONTDIR}Roboto-Bold.ttf"
-# FONTINDEX = 8
-FONTNAME = os.path.join(FONTDIR, "Roboto-Regular.ttf")
-BOLDFONTNAME = os.path.join(FONTDIR, "Roboto-Medium.ttf")
-FONTINDEX = 0
+def validate_font(fontpath: str) -> bool:
+    """Validate if the font exists
 
+    Args:
+        fontpath (str): Path to the font file
 
-def create_font(size: int, fontname=FONTNAME) -> ImageFont.FreeTypeFont:
+    Returns:
+        bool: True if font exists, otherwise False
+    """
+    return os.path.isfile(fontpath)
+
+def create_font(size: int, fontpath: str) -> ImageFont.FreeTypeFont:
     """Create the font object
 
     Args:
         size (int): Pixel size
+        fontpath(str): Path to the font file
 
     Returns:
         ImageFont.FreeTypeFont: The created font
     """
-    font = ImageFont.truetype(fontname, size)
+    font = ImageFont.truetype(fontpath, size)
     return font
-
-
-def create_bold_font(size: int, fontname=BOLDFONTNAME) -> ImageFont.FreeTypeFont:
-    """Create the bold font object
-
-    Args:
-        size (int): Pixel size
-
-    Returns:
-        ImageFont.FreeTypeFont: The created font
-    """
-    font = ImageFont.truetype(fontname, size, index=FONTINDEX)
-    return font
-
 
 def draw_text_on_image(img: Image, text: str, xy: tuple, centered: bool,
                        font: ImageFont.FreeTypeFont, fill: tuple = (100, 100, 100)) -> Image:
@@ -50,7 +38,7 @@ def draw_text_on_image(img: Image, text: str, xy: tuple, centered: bool,
         xy (tuple): The xy position of the starting point
         centered (bool): Center the text relative to the entire image
         font (ImageFont.FreeTypeFont): The font to use. See create_font and create_bold_font.
-        fill (tuple, optional): The font colour. Defaults to black (100, 100, 100).
+        fill (tuple, optional): The font color. Defaults to black (100, 100, 100).
 
     Returns:
         Image: The image with the text drawn on it.
@@ -69,7 +57,7 @@ def draw_text_on_image(img: Image, text: str, xy: tuple, centered: bool,
     w = draw.textlength(text, font=font)
 
     if centered:
-        # Centre the starting x pos
+        # Center the starting x pos
         x = (img.width - w) / 2
 
     # Draw the actual text on the image.
@@ -81,18 +69,20 @@ def draw_text_on_image(img: Image, text: str, xy: tuple, centered: bool,
 
     return img, (next_x, next_y)
 
-def get_optimal_font_size(text, target_height, max_font_size=100, min_font_size=1):
+def get_optimal_font_size(text, target_height, fontpath, max_font_size=100, min_font_size=1):
     """
     Calculate the optimal font size based on a target height
 
     Args:
         text (str): Sample text to draw
         target_height (int): The target height
+        fontpath: (str): The path of the font to determine the size for.
         max_font_size (int, optional): Max font size to return. Defaults to 100.
         min_font_size (int, optional): Min font size to return. Defaults to 1.
     """
     def check_size(font_size):
-        font = ImageFont.truetype(FONTNAME, font_size)
+        font = ImageFont.truetype(fontpath, font_size)
+        font.size = font_size
         _, _, _, text_height = font.getbbox(text)
         return text_height <= target_height
 
@@ -105,4 +95,4 @@ def get_optimal_font_size(text, target_height, max_font_size=100, min_font_size=
         else:
             high = mid - 1
 
-    return high  # The largest font size that fits
+    return high # The largest font size that fits
