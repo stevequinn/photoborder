@@ -8,7 +8,7 @@ A colour palette can be added to the border as well.
 
 ## Installation
 
-```bash 
+```bash
 git clone https://github.com/stevequinn/photoborder
 ```
 
@@ -31,14 +31,16 @@ positional arguments:
   filename
 
 options:
-  -h, --help            show this help message and exit
-  -e, --exif            print photo exif data on the border
-  -p, --palette         Add colour palette to the photo border
-  -t, --border_type     Border Type: p for polaroid, s for small, m for medium, l for large, i for instagram (default: s)
-  -f, -font             Font Typeface to use
-  -fb, --font bold      Bold Font Typeface to use
-  --include             File patterns to include (default: *.jpg *.jpeg *.png, *.JPG, *.JPEG, *.PNG)
-  --exclude             File patterns to exclude (default: *_border*)
+  -h, --help              Show this help message and exit
+  -e, --exif              Print photo exif data on the border
+  -p, --palette           Add colour palette to the photo border
+  -t, --border_type       Border Type: p for polaroid, s for small, m for medium, l for large, i for instagram (default: s)
+  -f, --font              Font Typeface to use (default: Roboto-Regular.ttf)
+  -fv, --fontvariant      Font style variant to use (default: 0)
+  -fb, --fontbold         Bold Font Typeface to use (default: Roboto-Medium.ttf)
+  -fbv, --fontboldvariant Bold Font style variant to use (default: 0)
+  --include               File patterns to include (default: *.jpg *.jpeg *.png, *.JPG, *.JPEG, *.PNG)
+  --exclude               File patterns to exclude (default: *_border*)
 
 Made for fun and to solve a little problem.
 ```
@@ -58,6 +60,22 @@ The repo comes with [Roboto](https://fonts.google.com/specimen/Roboto) (Regular,
 ```photoborder/fonts```
 
 Should you wish to use another font you should add it to the ```fonts``` directory and use the appropriate arguments
+
+## Testing
+
+There are some very simple tests available in the `tests/` directory.
+
+You can run these with:
+
+```bash
+pytest -s ./tests
+```
+
+For specific test modules just do the same for the file like so:
+
+```bash
+pytest -s ./tests/test_text.py
+```
 
 ## Examples
 

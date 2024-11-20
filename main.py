@@ -16,7 +16,7 @@ from text import validate_font
 
 # Enable logging
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+    format="%(asctime)s - %(levelname)s - %(message)s", level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S'
 )
 logger = logging.getLogger(__name__)
 
@@ -42,12 +42,17 @@ def parse_arguments():
                         help='File patterns to exclude (default: *_border*)')
     parser.add_argument('-f', '--font', default='Roboto-Regular.ttf',
                         help='Font file in fonts directory')
+    parser.add_argument('-fv', '--fontvariant', default=0, type=int,
+                        help='Font style variant index')
     parser.add_argument('-fb', '--fontbold', default='Roboto-Medium.ttf',
                         help='Bold font file in fonts directory')
+    parser.add_argument('-fbv', '--fontboldvariant', default=0, type=int,
+                        help='Bold font style variant index')
     return parser.parse_args()
 
 
-def process_image(path: str, add_exif: bool, add_palette: bool, border_type: BorderType, fontname: str, boldfontname: str) -> str:
+def process_image(path: str, add_exif: bool, add_palette: bool, border_type: BorderType,
+                  font: tuple[str, int], boldfont: tuple[str, int]) -> str:
     """ Add a border to an image
     Supported image types ['jpg', 'jpeg', 'png'].
 
@@ -57,8 +62,8 @@ def process_image(path: str, add_exif: bool, add_palette: bool, border_type: Bor
         add_palette (bool): Add colour palette information to the border.
                             Currently only supported on Polaroid border types.
         border_type (BorderType): The type of border to add to the photo.
-        fontname (str): name of the font file to use
-        boldfontname (str): name of the bold font file to use
+        font: tuple[str, int]: (fontName, fontVariantIndex)
+        boldfont: tuple[str, int]: (fontName, fontVariantIndex)
     """
     filetypes = ['jpg', 'jpeg', 'png']
     path_dot_parts = path.split('.')
@@ -80,16 +85,16 @@ def process_image(path: str, add_exif: bool, add_palette: bool, border_type: Bor
         if exif:
             moduledir = os.path.dirname(os.path.abspath(__file__))
             fontdir = os.path.join(moduledir, "fonts")
-            font_path = os.path.join(fontdir, fontname)
-            bold_font_path = os.path.join(fontdir, boldfontname)
+            font_path = os.path.join(fontdir, font[0])
+            bold_font_path = os.path.join(fontdir, boldfont[0])
 
-            # Validate fonts before processing any images
-            error_messages = [f"Font '{f}' not found in the font directory." for f in [
-                font_path, bold_font_path] if not validate_font(f)]
+            # Exit early if a problem exists with the fonts
+            error_messages = [err for f in [(font_path, font[1]), (bold_font_path, boldfont[1])]
+                              if (err := validate_font(fontpath=f[0], index=f[1]))]
             if len(error_messages) > 0:
                 raise ValueError(error_messages)
 
-            img_with_border = draw_exif(img_with_border, exif, border, font_path, bold_font_path)
+            img_with_border = draw_exif(img_with_border, exif, border, (font_path, font[1]), (bold_font_path, boldfont[1]))
             save_as = f'{save_as}_exif'
 
     if add_palette:
@@ -146,7 +151,8 @@ def main():
 
     for path in paths:
         logger.info(f'Adding border to {path}')
-        save_path = process_image(path, args.exif, args.palette, args.border_type, args.font, args.fontbold)
+        save_path = process_image(path=path, add_exif=args.exif, add_palette=args.palette, border_type=args.border_type,
+                                  font=(args.font, args.fontvariant) , boldfont=(args.fontbold, args.fontboldvariant))
         logger.info(f'Saved as {save_path}')
 
 if __name__ == "__main__":
